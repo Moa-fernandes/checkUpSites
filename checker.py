@@ -383,53 +383,57 @@ def render_page(url: str) -> dict:
     """Abre a página em Chromium (desktop e celular) e coleta dados de renderização e rede."""
     failed_requests = []
     try:
-        with sync_playwright() as p:
-            browser = p.chromium.launch(headless=True)
-            try:
-                context = browser.new_context(
-                    user_agent=USER_AGENT,
-                    viewport={"width": 1280, "height": 900},
-                    locale="pt-BR",
-                )
-                context.route("**/*", _route_guard)
-                page = context.new_page()
+        try:
+            with sync_playwright() as p:
+                browser = p.chromium.launch(headless=True)
+                try:
+                    context = browser.new_context(
+                        user_agent=USER_AGENT,
+                        viewport={"width": 1280, "height": 900},
+                        locale="pt-BR",
+                    )
+                    context.route("**/*", _route_guard)
+                    page = context.new_page()
 
-                console_errors = []
-                js_errors = []
-                page.on("console", lambda m: console_errors.append(m.text)
-                        if m.type == "error" else None)
-                page.on("pageerror", lambda e: js_errors.append(str(e)))
-                page.on(
-                    "response",
-                    lambda r: failed_requests.append(f"{r.status} {r.url[:110]}")
-                    if r.status >= 400 else None,
-                )
-                page.on(
-                    "requestfailed",
-                    lambda req: failed_requests.append(f"FALHA {req.url[:110]}")
-                    if req.failure and "ERR_ABORTED" not in (req.failure or "") else None,
-                )
+                    console_errors = []
+                    js_errors = []
+                    page.on("console", lambda m: console_errors.append(m.text)
+                            if m.type == "error" else None)
+                    page.on("pageerror", lambda e: js_errors.append(str(e)))
+                    page.on(
+                        "response",
+                        lambda r: failed_requests.append(f"{r.status} {r.url[:110]}")
+                        if r.status >= 400 else None,
+                    )
+                    page.on(
+                        "requestfailed",
+                        lambda req: failed_requests.append(f"FALHA {req.url[:110]}")
+                        if req.failure and "ERR_ABORTED" not in (req.failure or "") else None,
+                    )
 
-                page.goto(url, wait_until="load", timeout=RENDER_TIMEOUT_MS)
-                page.wait_for_timeout(SETTLE_MS)
-                rendered_html = page.content()
-                colors = page.evaluate(CONTRAST_JS)
-                quality = page.evaluate(QUALITY_JS)
+                    page.goto(url, wait_until="load", timeout=RENDER_TIMEOUT_MS)
+                    page.wait_for_timeout(SETTLE_MS)
+                    rendered_html = page.content()
+                    colors = page.evaluate(CONTRAST_JS)
+                    quality = page.evaluate(QUALITY_JS)
 
-                mobile = browser.new_context(
-                    user_agent=USER_AGENT,
-                    viewport={"width": 375, "height": 812},
-                    locale="pt-BR",
-                    is_mobile=True,
-                )
-                mobile.route("**/*", _route_guard)
-                mpage = mobile.new_page()
-                mpage.goto(url, wait_until="load", timeout=RENDER_TIMEOUT_MS)
-                mpage.wait_for_timeout(SETTLE_MS)
-                mobile_overflow = mpage.evaluate(OVERFLOW_JS)
-                mobile.close()
-            finally:
-                browser.close()
+                    mobile = browser.new_context(
+                        user_agent=USER_AGENT,
+                        viewport={"width": 375, "height": 812},
+                        locale="pt-BR",
+                        is_mobile=True,
+                    )
+                    mobile.route("**/*", _route_guard)
+                    mpage = mobile.new_page()
+                    mpage.goto(url, wait_until="load", timeout=RENDER_TIMEOUT_MS)
+                    mpage.wait_for_timeout(SETTLE_MS)
+                    mobile_overflow = mpage.evaluate(OVERFLOW_JS)
+                    mobile.close()
+                finally:
+                    browser.close()
+        except Exception:
+            raw = fetch_raw_page(url)
+            return _fallback_render_from_html(raw.get("html", ""))
     except PlaywrightError as exc:
         raise ValueError(
             "Não consegui abrir a página no navegador. Confira o endereço e tente de novo."
