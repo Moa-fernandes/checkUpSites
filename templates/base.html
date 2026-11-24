@@ -1,0 +1,476 @@
+<!doctype html>
+<html lang="pt-BR" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}checkUp{% endblock %}</title>
+  <meta name="description" content="{% block description %}Verifique certificado SSL, infraestrutura, contraste, imagens, links, acessibilidade e erros do seu site em segundos.{% endblock %}">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'system-ui', '-apple-system', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'ui-monospace', 'SFMono-Regular', 'monospace'],
+          },
+        },
+      },
+    };
+  </script>
+  <script>
+    (function () {
+      try {
+        const savedTheme = localStorage.getItem('checkup_theme');
+        if (savedTheme === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        }
+        const savedLang = localStorage.getItem('checkup_lang');
+        if (savedLang === 'en') {
+          document.documentElement.lang = 'en';
+        }
+      } catch (_e) {}
+    })();
+  </script>
+  <style>
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 14mm 14mm 16mm 14mm;
+      }
+      .no-print,
+      .screen-only {
+        display: none !important;
+      }
+      .print-only {
+        display: block !important;
+      }
+      html, body {
+        background: #ffffff !important;
+        color: #111827 !important;
+        font-size: 10.5pt !important;
+        line-height: 1.45 !important;
+      }
+      main {
+        max-width: 100% !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .print-avoid-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+
+    html[data-theme="dark"] body {
+      background-color: #090d16;
+      color: #f1f5f9;
+    }
+    html[data-theme="dark"] header,
+    html[data-theme="dark"] footer {
+      background-color: rgba(15, 23, 42, 0.92);
+      border-color: #1e293b;
+      color: #cbd5e1;
+    }
+    html[data-theme="dark"] .bg-white,
+    html[data-theme="dark"] .bg-white\/90 {
+      background-color: #111827 !important;
+      color: #f1f5f9 !important;
+      border-color: #1f2937 !important;
+    }
+    html[data-theme="dark"] .bg-slate-50,
+    html[data-theme="dark"] .bg-slate-50\/70,
+    html[data-theme="dark"] .bg-slate-50\/80 {
+      background-color: #0f172a !important;
+      border-color: #1e293b !important;
+    }
+    html[data-theme="dark"] .bg-slate-100 {
+      background-color: #1e293b !important;
+      color: #e2e8f0 !important;
+    }
+    html[data-theme="dark"] .text-slate-900 {
+      color: #f8fafc !important;
+    }
+    html[data-theme="dark"] .text-slate-800,
+    html[data-theme="dark"] .text-slate-700 {
+      color: #cbd5e1 !important;
+    }
+    html[data-theme="dark"] .text-slate-600,
+    html[data-theme="dark"] .text-slate-500 {
+      color: #94a3b8 !important;
+    }
+    html[data-theme="dark"] .border-slate-200,
+    html[data-theme="dark"] .border-slate-200\/90,
+    html[data-theme="dark"] .border-slate-300 {
+      border-color: #1e293b !important;
+    }
+    html[data-theme="dark"] input[type="text"],
+    html[data-theme="dark"] input[type="email"] {
+      background-color: #090d16 !important;
+      color: #f8fafc !important;
+      border-color: #334155 !important;
+    }
+    html[data-theme="dark"] .bg-gradient-to-br {
+      background-image: none !important;
+      background-color: #111827 !important;
+      border-color: #1e293b !important;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#f8fafc] text-slate-900 antialiased selection:bg-indigo-600 selection:text-white">
+  <a href="#conteudo"
+     data-i18n="skip_to_content"
+     class="no-print sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    Pular para o conteúdo
+  </a>
+
+  <header class="no-print sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
+    <nav class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6" aria-label="Principal">
+      <a href="/" class="group inline-flex min-h-[44px] items-center gap-3 rounded-lg pr-2 text-lg font-extrabold tracking-tight text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+        <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" class="h-9 w-9 rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105">
+        <span>check<span class="text-indigo-700">Up</span></span>
+      </a>
+
+      <div class="flex items-center gap-2">
+        <label for="lang-selector" class="sr-only">Idioma / Language</label>
+        <select id="lang-selector" aria-label="Idioma / Language"
+          class="min-h-[40px] rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 font-mono text-xs font-bold text-slate-800 transition hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          <option value="pt">PT</option>
+          <option value="en">EN</option>
+        </select>
+
+        <button type="button" id="theme-toggle" aria-label="Alternar tema claro ou escuro"
+          class="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-800 transition hover:border-indigo-300 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          <svg id="icon-sun" class="hidden h-4 w-4 text-amber-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"></circle>
+            <path d="M12 2v2"></path><path d="M12 20v2"></path>
+            <path d="m4.93 4.93 1.41 1.41"></path><path d="m17.66 17.66 1.41 1.41"></path>
+            <path d="M2 12h2"></path><path d="M20 12h2"></path>
+            <path d="m6.34 17.66-1.41 1.41"></path><path d="m19.07 4.93-1.41 1.41"></path>
+          </svg>
+          <svg id="icon-moon" class="h-4 w-4 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+          </svg>
+          <span id="theme-label">Bright</span>
+        </button>
+
+        <a href="/privacidade" data-i18n="privacy_link"
+           class="hidden sm:inline-flex min-h-[40px] items-center rounded-xl px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 hover:text-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          Política de privacidade
+        </a>
+      </div>
+    </nav>
+  </header>
+
+  <main id="conteudo" class="mx-auto w-full max-w-5xl flex-1 px-4 py-10 sm:px-6 sm:py-12">
+    {% block content %}{% endblock %}
+  </main>
+
+  <!-- Modal de pagamento Pix (R$ 5,99) + envio por e-mail para JSON / PDF -->
+  <div id="paywall-modal"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="paywall-title"
+       class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/65 p-4 backdrop-blur-xs">
+    <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-7">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <span data-i18n="paywall_badge" class="inline-block rounded-full bg-indigo-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wider text-indigo-900">
+            Depósito / Pix • R$ 5,99
+          </span>
+          <h2 id="paywall-title" data-i18n="paywall_title" class="mt-2 text-xl font-extrabold text-slate-900">
+            Receber relatório (JSON ou PDF/Impressão)
+          </h2>
+        </div>
+        <button type="button" id="paywall-close" aria-label="Fechar modal"
+          class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900">
+          ✕
+        </button>
+      </div>
+
+      <p data-i18n="paywall_desc" class="mt-2.5 text-sm leading-relaxed text-slate-600">
+        Valor definido: <strong class="font-mono text-slate-900">R$ 5,99</strong> via Pix. Informe seu e-mail para registrar o envio do JSON ou abrir a versão de impressão/PDF.
+      </p>
+
+      <div class="mt-4 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-12 sm:items-center">
+        <div class="space-y-2 sm:col-span-7">
+          <p class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Chave Pix (E-mail)</p>
+          <p class="break-all rounded-xl border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-bold text-slate-900">
+            {{ pix_key }}
+          </p>
+          <p class="font-mono text-sm font-extrabold text-emerald-700">Valor: R$ 5,99</p>
+
+          <label for="paywall-email-input" data-i18n="paywall_email_label" class="block pt-1 text-xs font-bold text-slate-700">
+            Seu e-mail para receber o relatório
+          </label>
+          <input id="paywall-email-input" type="email" required placeholder="seu@email.com"
+            class="min-h-[40px] w-full rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          <p id="paywall-email-error" class="hidden text-xs font-semibold text-red-700"></p>
+        </div>
+
+        <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 sm:col-span-5">
+          <img src="{{ url_for('static', filename='pix-qrcode.png') }}"
+               alt="QR Code Pix R$ 5,99"
+               class="h-36 w-36 rounded-lg object-contain">
+          <span class="mt-1.5 font-mono text-[10px] font-semibold text-slate-500">Pix R$ 5,99</span>
+        </div>
+      </div>
+
+      <div class="mt-5 flex flex-col gap-2.5 sm:flex-row sm:justify-end">
+        <button type="button" id="paywall-cancel" data-i18n="cancel_btn"
+          class="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-700 hover:bg-slate-50">
+          Cancelar
+        </button>
+        <button type="button" id="paywall-continue" data-i18n="continue_send_btn"
+          class="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-indigo-700 px-4 py-2 text-xs font-bold text-white hover:bg-indigo-800">
+          Confirmar e gerar / enviar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <footer class="no-print border-t border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 text-sm text-slate-600 sm:px-6">
+      <!-- Suporte do projeto via Pix com QR Code -->
+      <div class="rounded-3xl border border-indigo-200/90 bg-indigo-50/60 p-5 sm:p-6">
+        <div class="grid gap-5 md:grid-cols-12 md:items-center">
+          <div class="space-y-2 md:col-span-8">
+            <p data-i18n="support_badge" class="text-xs font-bold uppercase tracking-wider text-indigo-800">
+              Suporte do projeto
+            </p>
+            <h2 data-i18n="support_title" class="text-lg font-extrabold text-slate-900">
+              Apoie o checkUp via Pix
+            </h2>
+            <p data-i18n="support_desc" class="text-xs leading-relaxed text-slate-700 sm:text-sm">
+              Contribuição voluntária para manter o diagnóstico gratuito e evoluir novas checagens de infraestrutura e acessibilidade.
+            </p>
+            <div class="flex flex-wrap items-center gap-2 pt-1">
+              <code id="pix-key-text" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-semibold text-slate-900">
+                {{ pix_key }}
+              </code>
+              <button type="button" id="btn-copy-pix" data-i18n="copy_pix_btn"
+                class="inline-flex min-h-[36px] items-center rounded-xl bg-indigo-700 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-800">
+                Copiar chave Pix
+              </button>
+              <span id="pix-copied-msg" class="hidden font-mono text-xs font-semibold text-emerald-700">OK</span>
+            </div>
+          </div>
+
+          <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 md:col-span-4">
+            <img src="{{ url_for('static', filename='pix-qrcode.png') }}"
+                 alt="QR Code Pix"
+                 class="h-36 w-36 rounded-lg object-contain">
+            <span class="mt-1.5 font-mono text-[11px] text-slate-500">Pix · {{ pix_key }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex flex-col items-center gap-3 text-center">
+        <a href="/privacidade" data-i18n="privacy_link"
+           class="inline-flex min-h-[44px] items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-800 transition hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          Política de privacidade
+        </a>
+        <p class="leading-relaxed">
+          © {{ year }} <strong class="font-semibold text-slate-800">checkUp</strong>.
+          <span data-i18n="rights_text">Todos os direitos reservados.</span>
+          <span data-i18n="created_by">Criado por</span> {{ owner }}.
+        </p>
+        <p class="font-mono text-xs text-slate-500">
+          <span data-i18n="unique_visitors">Visitantes únicos</span>: {{ stats.visitors }} ·
+          <span data-i18n="page_views">Acessos à página</span>: {{ stats.visits }}
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      const I18N = {
+        pt: {
+          skip_to_content: 'Pular para o conteúdo',
+          privacy_link: 'Política de privacidade',
+          hero_badge: 'Diagnóstico gratuito em tempo real',
+          hero_tags: 'SSL · Infraestrutura · Acessibilidade · Qualidade',
+          hero_title: 'Seu site está em boa forma?',
+          hero_subtitle: 'Cole o endereço do site e veja números objetivos e o que corrigir: validade e expiração do certificado SSL, tempo de resposta, cabeçalhos de segurança, contraste de cores, imagens e links quebrados, textos de teste e comportamento no celular.',
+          url_placeholder: 'exemplo.com.br',
+          check_btn: 'Verificar site',
+          wait_note: 'A análise abre a página em um navegador real e testa SSL, rede, qualidade e acessibilidade.',
+          live_title: 'Status ao vivo — 3 alvos públicos abertos',
+          live_refresh: 'Atualizar agora',
+          live_lgpd_note: 'Monitora apenas 3 fontes públicas abertas (transporte e rotas aéreas abertas), em conformidade com a LGPD.',
+          waitlist_title: 'Quer ser avisado sobre as novidades?',
+          waitlist_desc: 'Esta verificação automática não substitui uma revisão feita por uma pessoa, leitores de tela ou testes manuais. Deixe seu e-mail para acompanhar as próximas melhorias.',
+          waitlist_btn: 'Quero ser avisado',
+          support_badge: 'Suporte do projeto',
+          support_title: 'Apoie o checkUp via Pix',
+          support_desc: 'Contribuição voluntária para manter o diagnóstico gratuito e evoluir novas checagens de infraestrutura e acessibilidade.',
+          copy_pix_btn: 'Copiar chave Pix',
+          rights_text: 'Todos os direitos reservados.',
+          created_by: 'Criado por',
+          unique_visitors: 'Visitantes únicos',
+          page_views: 'Acessos à página',
+          paywall_badge: 'Depósito / Pix • R$ 5,99',
+          paywall_title: 'Receber relatório (JSON ou PDF/Impressão)',
+          paywall_desc: 'Valor definido: R$ 5,99 via Pix. Informe seu e-mail para registrar o envio do JSON ou abrir a versão de impressão/PDF.',
+          paywall_email_label: 'Seu e-mail para receber o relatório',
+          cancel_btn: 'Cancelar',
+          continue_send_btn: 'Confirmar e gerar / enviar',
+        },
+        en: {
+          skip_to_content: 'Skip to content',
+          privacy_link: 'Privacy policy',
+          hero_badge: 'Free real-time diagnostic',
+          hero_tags: 'SSL · Infrastructure · Accessibility · Quality',
+          hero_title: 'Is your website in good shape?',
+          hero_subtitle: 'Paste a website URL and get objective metrics and fixes: SSL certificate validity and expiration, response time, security headers, color contrast, broken images and links, placeholder text, and mobile layout.',
+          url_placeholder: 'example.com',
+          check_btn: 'Check website',
+          wait_note: 'The scan opens the page in a real browser and checks SSL, network, code quality, and accessibility.',
+          live_title: 'Live status — 3 open public targets',
+          live_refresh: 'Refresh now',
+          live_lgpd_note: 'Monitors only 3 open public sources (public transit & open flight routes) in compliance with LGPD.',
+          waitlist_title: 'Want to be notified about updates?',
+          waitlist_desc: 'Automated checks do not replace human review, screen readers, or manual testing. Leave your email for upcoming improvements.',
+          waitlist_btn: 'Notify me',
+          support_badge: 'Project support',
+          support_title: 'Support checkUp via Pix',
+          support_desc: 'Voluntary support to keep diagnostics free and build deeper infrastructure and accessibility checks.',
+          copy_pix_btn: 'Copy Pix key',
+          rights_text: 'All rights reserved.',
+          created_by: 'Created by',
+          unique_visitors: 'Unique visitors',
+          page_views: 'Page views',
+          paywall_badge: 'Deposit / Pix • R$ 5,99',
+          paywall_title: 'Receive report (JSON or PDF/Print)',
+          paywall_desc: 'Set amount: R$ 5.99 via Pix. Enter your email to log JSON delivery or open Print/PDF view.',
+          paywall_email_label: 'Your email to receive the report',
+          cancel_btn: 'Cancel',
+          continue_send_btn: 'Confirm & generate / send',
+        },
+      };
+
+      function applyLanguage(lang) {
+        const chosen = lang === 'en' ? 'en' : 'pt';
+        document.documentElement.lang = chosen === 'en' ? 'en' : 'pt-BR';
+        try { localStorage.setItem('checkup_lang', chosen); } catch (_e) {}
+        const sel = document.getElementById('lang-selector');
+        if (sel) sel.value = chosen;
+
+        const dict = I18N[chosen];
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          const key = el.getAttribute('data-i18n');
+          if (dict[key]) el.textContent = dict[key];
+        });
+        const urlInput = document.getElementById('url');
+        if (urlInput && dict.url_placeholder) {
+          urlInput.placeholder = dict.url_placeholder;
+        }
+      }
+
+      function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        try { localStorage.setItem('checkup_theme', isDark ? 'dark' : 'light'); } catch (_e) {}
+        const sun = document.getElementById('icon-sun');
+        const moon = document.getElementById('icon-moon');
+        const label = document.getElementById('theme-label');
+        if (sun) sun.classList.toggle('hidden', !isDark);
+        if (moon) moon.classList.toggle('hidden', isDark);
+        if (label) label.textContent = isDark ? 'Dark' : 'Bright';
+      }
+
+      const langSelect = document.getElementById('lang-selector');
+      if (langSelect) {
+        langSelect.addEventListener('change', function () {
+          applyLanguage(langSelect.value);
+        });
+      }
+
+      const themeBtn = document.getElementById('theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function () {
+          const cur = document.documentElement.getAttribute('data-theme');
+          applyTheme(cur === 'dark' ? 'light' : 'dark');
+        });
+      }
+
+      const pixKey = '{{ pix_key }}';
+      const copyPixBtn = document.getElementById('btn-copy-pix');
+      if (copyPixBtn) {
+        copyPixBtn.addEventListener('click', function () {
+          const doneMsg = document.getElementById('pix-copied-msg');
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(pixKey).catch(function () {});
+          }
+          if (doneMsg) {
+            doneMsg.classList.remove('hidden');
+            setTimeout(function () { doneMsg.classList.add('hidden'); }, 2000);
+          }
+        });
+      }
+
+      let pendingExportCallback = null;
+      const modal = document.getElementById('paywall-modal');
+      const closeBtn = document.getElementById('paywall-close');
+      const cancelBtn = document.getElementById('paywall-cancel');
+      const continueBtn = document.getElementById('paywall-continue');
+      const emailInput = document.getElementById('paywall-email-input');
+      const emailErr = document.getElementById('paywall-email-error');
+
+      window.requestPaidReportAction = function (callback) {
+        pendingExportCallback = callback;
+        if (emailErr) {
+          emailErr.classList.add('hidden');
+          emailErr.textContent = '';
+        }
+        if (!modal) {
+          if (typeof callback === 'function') callback('');
+          return;
+        }
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        if (emailInput) emailInput.focus();
+      };
+
+      function hidePaywallModal() {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      if (closeBtn) closeBtn.addEventListener('click', hidePaywallModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', hidePaywallModal);
+      if (continueBtn) {
+        continueBtn.addEventListener('click', function () {
+          const addr = emailInput ? emailInput.value.trim() : '';
+          if (!addr || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)) {
+            if (emailErr) {
+              emailErr.textContent = 'Informe um e-mail válido para receber o relatório.';
+              emailErr.classList.remove('hidden');
+            }
+            return;
+          }
+          const cb = pendingExportCallback;
+          pendingExportCallback = null;
+          hidePaywallModal();
+          if (typeof cb === 'function') cb(addr);
+        });
+      }
+
+      let initialTheme = 'light';
+      let initialLang = 'pt';
+      try {
+        if (localStorage.getItem('checkup_theme') === 'dark') initialTheme = 'dark';
+        if (localStorage.getItem('checkup_lang') === 'en') initialLang = 'en';
+      } catch (_e) {}
+      applyTheme(initialTheme);
+      applyLanguage(initialLang);
+    })();
+  </script>
+</body>
+</html>

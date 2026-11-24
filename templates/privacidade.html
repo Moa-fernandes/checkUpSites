@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block title %}Política de privacidade — checkUp{% endblock %}
+{% block description %}Como o checkUp coleta, usa e protege seus dados.{% endblock %}
+
+{% block content %}
+  <a href="/"
+     class="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+    ← Voltar ao início
+  </a>
+
+  <div class="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
+    <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Política de privacidade</h1>
+    <p class="mt-2 font-mono text-xs text-slate-500">Última atualização: {{ updated }}</p>
+
+    <div class="mt-8 space-y-8 text-sm leading-relaxed text-slate-700 sm:text-base">
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">1. Quem é responsável pelos dados</h2>
+        <p class="mt-2">
+          O checkUp é operado por {{ owner }}. Para dúvidas sobre esta política ou sobre
+          seus dados, escreva para {{ contact }}.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">2. Quais dados coletamos</h2>
+        <ul class="mt-2 list-disc space-y-2 pl-6">
+          <li><strong>E-mail</strong>, somente se você preencher o formulário "Quero ser avisado".</li>
+          <li><strong>Um identificador aleatório</strong>, guardado em um cookie no seu navegador, usado para contar visitantes únicos. Ele não contém seu nome nem outros dados pessoais.</li>
+          <li><strong>Contagem anônima de acessos</strong>, sem associação a pessoas.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">3. O que não guardamos</h2>
+        <p class="mt-2">
+          Não usamos ferramentas de publicidade e não vendemos dados. Os últimos resumos
+          técnicos por URL podem ficar salvos localmente no histórico para comparação entre
+          verificações.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">4. Para que usamos os dados</h2>
+        <ul class="mt-2 list-disc space-y-2 pl-6">
+          <li>Enviar avisos sobre novidades, somente para quem pediu.</li>
+          <li>Medir quantas pessoas usam o serviço e comparar evolução de sites verificados.</li>
+          <li>Manter o site funcionando e corrigir erros.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">5. Cookies</h2>
+        <p class="mt-2">
+          Usamos apenas o cookie técnico descrito acima, que dura até dois anos. Você pode
+          apagá-lo pelas configurações do navegador a qualquer momento.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">6. Por quanto tempo guardamos</h2>
+        <p class="mt-2">
+          Os e-mails são mantidos enquanto você quiser receber novidades. Os contadores são
+          anônimos e não se referem a pessoas identificadas.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">7. Seus direitos</h2>
+        <p class="mt-2">
+          Pela Lei Geral de Proteção de Dados (LGPD), você pode pedir para ver, corrigir ou
+          excluir seus dados e pode cancelar o recebimento de novidades a qualquer momento.
+          Para isso, escreva para {{ contact }}.
+        </p>
+      </section>
+
+      <section>
+        <h2 class="text-lg font-bold text-slate-900 sm:text-xl">8. Alterações</h2>
+        <p class="mt-2">
+          Se esta política mudar, a data no topo desta página será atualizada.
+        </p>
+      </section>
+    </div>
+  </div>
+{% endblock %}

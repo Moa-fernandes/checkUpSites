@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+
+{% block title %}checkUp — Diagnóstico de qualidade, acessibilidade e infraestrutura{% endblock %}
+
+{% block content %}
+  <style>
+    @keyframes cuPulseRing {
+      0% { transform: scale(0.95); opacity: 0.7; }
+      70% { transform: scale(1.22); opacity: 0; }
+      100% { transform: scale(1.22); opacity: 0; }
+    }
+    .cu-ring-pulse {
+      animation: cuPulseRing 1.9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    }
+    .cu-expand-backdrop {
+      transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1), opacity 420ms ease;
+    }
+  </style>
+
+  <!-- Loading circular expansivo no centro da tela -->
+  <div id="loading-overlay"
+       role="status"
+       aria-live="polite"
+       aria-hidden="true"
+       class="no-print pointer-events-none fixed inset-0 z-50 flex items-center justify-center opacity-0 transition-opacity duration-300">
+    <div id="loading-dim" class="absolute inset-0 bg-slate-950/55 backdrop-blur-[2px] transition-opacity duration-500"></div>
+
+    <div id="loading-grow-circle"
+         class="cu-expand-backdrop absolute h-32 w-32 rounded-full bg-gradient-to-br from-indigo-700 via-indigo-600 to-sky-600 shadow-2xl"
+         style="transform: scale(1);"></div>
+
+    <div id="loading-hud" class="relative z-10 flex flex-col items-center justify-center text-center text-white">
+      <div class="relative flex h-40 w-40 items-center justify-center sm:h-48 sm:w-48">
+        <span class="cu-ring-pulse absolute inset-0 rounded-full border-2 border-sky-200/70"></span>
+        <svg class="h-full w-full -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="8"></circle>
+          <circle id="loading-progress-arc"
+                  cx="60" cy="60" r="52"
+                  fill="none"
+                  stroke="#ffffff"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                  stroke-dasharray="326.73"
+                  stroke-dashoffset="326.73"
+                  style="transition: stroke-dashoffset 280ms ease-out;"></circle>
+        </svg>
+        <div class="absolute inset-0 flex flex-col items-center justify-center">
+          <span id="loading-percent" class="font-mono text-3xl font-extrabold tracking-tight sm:text-4xl">0%</span>
+          <span class="mt-0.5 text-[11px] font-bold uppercase tracking-widest text-indigo-100">analisando</span>
+        </div>
+      </div>
+
+      <p id="loading-step" class="mt-5 max-w-xs rounded-full bg-slate-950/35 px-4 py-1.5 text-xs font-semibold text-white ring-1 ring-white/20 sm:max-w-md sm:text-sm">
+        Preparando diagnóstico...
+      </p>
+    </div>
+  </div>
+
+  <section class="no-print rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-10">
+    <div class="flex flex-wrap items-center gap-2.5">
+      <span data-i18n="hero_badge" class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-indigo-800 ring-1 ring-inset ring-indigo-200">
+        Diagnóstico gratuito em tempo real
+      </span>
+      <span data-i18n="hero_tags" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+        SSL · Infraestrutura · Acessibilidade · Qualidade
+      </span>
+    </div>
+
+    <h1 data-i18n="hero_title" class="mt-5 max-w-3xl text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.12]">
+      Seu site está em boa forma?
+    </h1>
+    <p data-i18n="hero_subtitle" class="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+      Cole o endereço do site e veja números objetivos e o que corrigir: validade e expiração
+      do certificado SSL, tempo de resposta, cabeçalhos de segurança, contraste de cores,
+      imagens e links quebrados, textos de teste e comportamento no celular.
+    </p>
+
+    <form method="post" id="form-verificar"
+          class="mt-7 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:flex-row sm:items-center">
+      <label for="url" class="sr-only">Endereço do site</label>
+      <input
+        id="url" name="url" type="text" required
+        value="{{ url }}" placeholder="exemplo.com.br" autocomplete="url"
+        class="min-h-[48px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-900 placeholder:font-sans placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-base"
+      >
+      <button type="submit" id="botao-verificar" data-i18n="check_btn"
+        class="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-base">
+        Verificar site
+      </button>
+    </form>
+
+    <p data-i18n="wait_note" class="mt-3 text-sm text-slate-600" id="aviso-espera">
+      A análise abre a página em um navegador real e testa SSL, rede, qualidade e acessibilidade.
+    </p>
+  </section>
+
+  <!-- Widget AO VIVO no início mostrando alvos públicos abertos clicáveis -->
+  <section class="no-print mt-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5" aria-labelledby="live-status-heading">
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2">
+        <span class="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+        <h2 id="live-status-heading" data-i18n="live_title" class="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+          Status ao vivo — alvos públicos abertos (clique para analisar)
+        </h2>
+      </div>
+      <button type="button" id="btn-refresh-live" data-i18n="live_refresh"
+        class="rounded-lg border border-slate-300 bg-slate-50 px-2.5 py-1 font-mono text-[11px] font-bold text-slate-700 hover:bg-slate-100">
+        Atualizar agora
+      </button>
+    </div>
+
+    <ul id="live-targets-list" class="mt-3 grid gap-2.5 sm:grid-cols-3">
+      {% for item in live_targets %}
+        <li>
+          <button type="button"
+            data-target-url="{{ item.url }}"
+            data-target-name="{{ item.name }}"
+            class="js-inspect-target flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-left text-xs transition hover:border-indigo-400 hover:bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+            <div class="min-w-0">
+              <p class="truncate font-bold text-slate-900">{{ item.name }}</p>
+              <p class="truncate font-mono text-[10px] text-slate-500">{{ item.url }}</p>
+              <p class="mt-0.5 font-mono text-[10px] font-semibold text-indigo-700">Clique para abrir análise completa →</p>
+            </div>
+            <div class="shrink-0 text-right font-mono">
+              <span class="inline-block rounded-md px-2 py-0.5 text-[10px] font-bold
+                {% if item.status == 'online' %}bg-emerald-100 text-emerald-800{% elif item.status == 'degraded' %}bg-amber-100 text-amber-900{% else %}bg-red-100 text-red-800{% endif %}">
+                {{ item.status_label or ('ONLINE' if item.ok else 'OFFLINE') }}
+              </span>
+              <p class="mt-0.5 text-[10px] text-slate-400">
+                {% if item.latency_ms is not none %}{{ item.latency_ms }}ms · {% endif %}{{ item.checked_at or '' }}
+              </p>
+            </div>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <p data-i18n="live_lgpd_note" class="mt-2.5 text-[11px] text-slate-500">
+      Monitora endpoints públicos abertos de referência e permite clicar em qualquer card para rodar e abrir o diagnóstico completo daquele alvo.
+    </p>
+  </section>
+
+  <div id="erro-ajax" role="alert" class="mt-6 hidden rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900 sm:text-base"></div>
+
+  {% if error %}
+    <div role="alert" class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900 sm:text-base">
+      {{ error }}
+    </div>
+  {% endif %}
+
+  <div id="resultado-container">
+    {% if result %}
+      {% include "_resultado.html" %}
+    {% endif %}
+  </div>
+
+  <section class="no-print mt-14 rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/90 via-white to-sky-50/70 p-6 shadow-sm sm:p-8" aria-labelledby="avisos">
+    <h2 id="avisos" data-i18n="waitlist_title" class="text-xl font-extrabold tracking-tight text-slate-900">
+      Quer ser avisado sobre as novidades?
+    </h2>
+    <p data-i18n="waitlist_desc" class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-700 sm:text-base">
+      Esta verificação automática não substitui uma revisão feita por uma pessoa, leitores de tela
+      ou testes manuais. Deixe seu e-mail para acompanhar as próximas melhorias.
+    </p>
+
+    {% if waitlist_ok %}
+      <p role="status" class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+        Obrigado! Avisaremos você quando houver novidades.
+      </p>
+    {% else %}
+      <form method="post" action="/avisar" class="mt-5 flex flex-col gap-3 sm:flex-row">
+        <label for="email" class="sr-only">Seu e-mail</label>
+        <input
+          id="email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email"
+          class="min-h-[48px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-base"
+        >
+        <button type="submit" data-i18n="waitlist_btn"
+          class="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-base">
+          Quero ser avisado
+        </button>
+      </form>
+      {% if waitlist_error %}
+        <p role="alert" class="mt-3 text-sm font-semibold text-red-800">{{ waitlist_error }}</p>
+      {% endif %}
+    {% endif %}
+  </section>
+
+  <script>
+    (function () {
+      const form = document.getElementById('form-verificar');
+      const urlInput = document.getElementById('url');
+      const btn = document.getElementById('botao-verificar');
+      const overlay = document.getElementById('loading-overlay');
+      const growCircle = document.getElementById('loading-grow-circle');
+      const dimLayer = document.getElementById('loading-dim');
+      const percentEl = document.getElementById('loading-percent');
+      const stepEl = document.getElementById('loading-step');
+      const arcEl = document.getElementById('loading-progress-arc');
+      const errorBox = document.getElementById('erro-ajax');
+      const resultContainer = document.getElementById('resultado-container');
+
+      const CIRCUMFERENCE = 2 * Math.PI * 52;
+      let currentPercent = 0;
+      let targetPercent = 0;
+      let rafId = null;
+
+      function computeFullScreenScale() {
+        const diag = Math.hypot(window.innerWidth, window.innerHeight);
+        return Math.max(12, Math.ceil((diag / 128) * 1.45));
+      }
+
+      function setCircleScaleForPercent(pct) {
+        if (!growCircle) return;
+        const clamped = Math.max(0, Math.min(100, pct));
+        const scale = clamped >= 100
+          ? computeFullScreenScale()
+          : 0.85 + (clamped / 100) * 4.6;
+        growCircle.style.transform = `scale(${scale.toFixed(3)})`;
+      }
+
+      function renderVisualProgress(pct) {
+        const rounded = Math.round(pct);
+        if (percentEl) percentEl.textContent = `${rounded}%`;
+        if (arcEl) {
+          const offset = CIRCUMFERENCE * (1 - Math.min(100, Math.max(0, pct)) / 100);
+          arcEl.style.strokeDashoffset = offset.toFixed(2);
+        }
+        setCircleScaleForPercent(pct);
+      }
+
+      function animateLoop() {
+        if (currentPercent < targetPercent) {
+          currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.45, (targetPercent - currentPercent) * 0.14));
+          renderVisualProgress(currentPercent);
+        }
+        if (Math.abs(currentPercent - targetPercent) > 0.05) {
+          rafId = requestAnimationFrame(animateLoop);
+        } else {
+          currentPercent = targetPercent;
+          renderVisualProgress(currentPercent);
+          rafId = null;
+        }
+      }
+
+      function setTargetPercent(pct, stepText) {
+        targetPercent = Math.max(targetPercent, Math.min(100, pct));
+        if (stepText && stepEl) stepEl.textContent = stepText;
+        if (!rafId) rafId = requestAnimationFrame(animateLoop);
+      }
+
+      function openOverlay(labelText) {
+        currentPercent = 4;
+        targetPercent = 8;
+        if (stepEl) stepEl.textContent = labelText || 'Iniciando verificação...';
+        if (growCircle) {
+          growCircle.style.transition = 'none';
+          growCircle.style.transform = 'scale(0.85)';
+          void growCircle.offsetWidth;
+          growCircle.style.transition = 'transform 620ms cubic-bezier(0.22, 1, 0.36, 1), opacity 420ms ease';
+        }
+        if (dimLayer) dimLayer.style.opacity = '1';
+        renderVisualProgress(currentPercent);
+        overlay.classList.remove('pointer-events-none', 'opacity-0');
+        overlay.classList.add('opacity-100');
+        overlay.setAttribute('aria-hidden', 'false');
+        if (!rafId) rafId = requestAnimationFrame(animateLoop);
+      }
+
+      function closeOverlay(afterExpand = false) {
+        if (rafId) {
+          cancelAnimationFrame(rafId);
+          rafId = null;
+        }
+        const finishHide = () => {
+          overlay.classList.add('opacity-0', 'pointer-events-none');
+          overlay.classList.remove('opacity-100');
+          overlay.setAttribute('aria-hidden', 'true');
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Verificar site';
+          }
+        };
+
+        if (afterExpand) {
+          currentPercent = 100;
+          targetPercent = 100;
+          renderVisualProgress(100);
+          if (dimLayer) dimLayer.style.opacity = '0';
+          setTimeout(finishHide, 480);
+        } else {
+          finishHide();
+        }
+      }
+
+      function bindReportEvents() {
+        const buttons = document.querySelectorAll('.filtro-btn');
+        const items = document.querySelectorAll('.item-problema');
+        const emptyMsg = document.getElementById('sem-filtro-match');
+
+        if (buttons.length && items.length) {
+          buttons.forEach(function (b) {
+            b.addEventListener('click', function () {
+              const filter = b.getAttribute('data-filter');
+
+              buttons.forEach(function (other) {
+                const active = other === b;
+                other.classList.toggle('bg-indigo-700', active);
+                other.classList.toggle('text-white', active);
+                other.classList.toggle('shadow-sm', active);
+                other.classList.toggle('border', !active);
+                other.classList.toggle('border-slate-300', !active);
+                other.classList.toggle('bg-white', !active);
+                other.classList.toggle('text-slate-700', !active);
+              });
+
+              let visible = 0;
+              items.forEach(function (item) {
+                const cat = item.getAttribute('data-category');
+                const show = filter === 'all' || cat === filter;
+                item.classList.toggle('hidden', !show);
+                if (show) visible++;
+              });
+
+              const activeLabel = document.getElementById('filtro-ativo-label');
+              if (activeLabel) {
+                activeLabel.textContent = filter === 'all'
+                  ? `Exibindo todos os ${visible} apontamentos`
+                  : `Filtro por categoria: ${filter} (${visible} item(ns))`;
+              }
+
+              if (emptyMsg) {
+                emptyMsg.classList.toggle('hidden', visible > 0);
+              }
+            });
+          });
+        }
+
+        const priorityCards = document.querySelectorAll('.js-priority-card');
+        if (priorityCards.length && items.length) {
+          priorityCards.forEach(function (card) {
+            card.addEventListener('click', function () {
+              const targetLevel = card.getAttribute('data-level-filter');
+              const levelNames = {
+                alta: 'Prioridade alta',
+                media: 'Prioridade média',
+                baixa: 'Prioridade baixa',
+              };
+
+              buttons.forEach(function (other) {
+                other.classList.remove('bg-indigo-700', 'text-white', 'shadow-sm');
+                other.classList.add('border', 'border-slate-300', 'bg-white', 'text-slate-700');
+              });
+
+              priorityCards.forEach(function (c) {
+                c.classList.toggle('ring-2', c === card);
+                c.classList.toggle('ring-indigo-600', c === card);
+              });
+
+              let visible = 0;
+              items.forEach(function (item) {
+                const lvl = item.getAttribute('data-level');
+                const show = lvl === targetLevel;
+                item.classList.toggle('hidden', !show);
+                if (show) visible++;
+              });
+
+              const activeLabel = document.getElementById('filtro-ativo-label');
+              if (activeLabel) {
+                activeLabel.textContent = `Filtrado por ${levelNames[targetLevel] || targetLevel}: ${visible} item(ns) a corrigir`;
+              }
+
+              if (emptyMsg) {
+                emptyMsg.classList.toggle('hidden', visible > 0);
+              }
+
+              const targetSection = document.getElementById('secao-corrigir');
+              if (targetSection) {
+                targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+              }
+            });
+          });
+        }
+
+        const rawDataEl = document.getElementById('dados-relatorio');
+
+        const doExportJson = function (recipientEmail) {
+          if (!rawDataEl) return;
+          const payload = JSON.parse(rawDataEl.textContent);
+          payload.delivery = {
+            method: 'email_and_download',
+            recipient_email: recipientEmail || '',
+            amount_brl: 5.99,
+          };
+          const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+          const blobUrl = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          const host = (payload.url || 'site').replace(/[^a-z0-9.-]+/gi, '_');
+          a.href = blobUrl;
+          a.download = `checkup-${host}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          URL.revokeObjectURL(blobUrl);
+        };
+
+        const doPrint = function () {
+          window.print();
+        };
+
+        document.querySelectorAll('.js-export-json, #btn-export-json').forEach(function (elBtn) {
+          elBtn.addEventListener('click', function () {
+            if (typeof window.requestPaidReportAction === 'function') {
+              window.requestPaidReportAction(function (addr) { doExportJson(addr); });
+            } else {
+              doExportJson('');
+            }
+          });
+        });
+
+        document.querySelectorAll('.js-print-report, #btn-print-report').forEach(function (elBtn) {
+          elBtn.addEventListener('click', function () {
+            if (typeof window.requestPaidReportAction === 'function') {
+              window.requestPaidReportAction(function () { doPrint(); });
+            } else {
+              doPrint();
+            }
+          });
+        });
+      }
+
+      bindReportEvents();
+
+      async function runCheckForUrl(rawUrl, targetTitle) {
+        const cleanUrl = (rawUrl || '').trim();
+        if (!cleanUrl) return;
+        if (urlInput) urlInput.value = cleanUrl;
+        if (errorBox) {
+          errorBox.classList.add('hidden');
+          errorBox.textContent = '';
+        }
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Verificando...';
+        }
+        openOverlay(targetTitle ? `Analisando ${targetTitle}...` : 'Iniciando verificação...');
+
+        try {
+          const resp = await fetch('/verificar/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: cleanUrl }),
+          });
+
+          if (!resp.ok || !resp.body) {
+            throw new Error('Falha na comunicação com o servidor.');
+          }
+
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder('utf-8');
+          let buffer = '';
+
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed) continue;
+              const msg = JSON.parse(trimmed);
+
+              if (msg.type === 'progress') {
+                setTargetPercent(msg.percent, msg.step);
+              } else if (msg.type === 'error') {
+                closeOverlay(false);
+                if (errorBox) {
+                  errorBox.textContent = msg.message || 'Não foi possível verificar o site.';
+                  errorBox.classList.remove('hidden');
+                }
+                return;
+              } else if (msg.type === 'done') {
+                if (resultContainer) {
+                  resultContainer.innerHTML = msg.html || '';
+                  bindReportEvents();
+                }
+                closeOverlay(true);
+                const sec = document.getElementById('resultado');
+                if (sec) {
+                  setTimeout(() => sec.scrollIntoView({ behavior: 'smooth', block: 'start' }), 220);
+                }
+                return;
+              }
+            }
+          }
+
+          closeOverlay(false);
+        } catch (_err) {
+          closeOverlay(false);
+          if (form) form.submit();
+        }
+      }
+
+      const liveListEl = document.getElementById('live-targets-list');
+      const refreshLiveBtn = document.getElementById('btn-refresh-live');
+
+      function bindLiveCardClicks() {
+        document.querySelectorAll('.js-inspect-target').forEach(function (cardBtn) {
+          cardBtn.addEventListener('click', function () {
+            const targetUrl = cardBtn.getAttribute('data-target-url') || '';
+            const targetName = cardBtn.getAttribute('data-target-name') || '';
+            runCheckForUrl(targetUrl, targetName);
+          });
+        });
+      }
+
+      function renderLiveItems(items) {
+        if (!liveListEl || !Array.isArray(items)) return;
+        liveListEl.innerHTML = items.slice(0, 3).map(function (it) {
+          const st = it.status || (it.ok ? 'online' : 'offline');
+          const lbl = it.status_label || (it.ok ? 'ONLINE' : 'OFFLINE');
+          const badgeCls = st === 'online'
+            ? 'bg-emerald-100 text-emerald-800'
+            : (st === 'degraded' ? 'bg-amber-100 text-amber-900' : 'bg-red-100 text-red-800');
+          const lat = (it.latency_ms !== null && it.latency_ms !== undefined) ? `${it.latency_ms}ms · ` : '';
+          return `
+            <li>
+              <button type="button"
+                data-target-url="${it.url}"
+                data-target-name="${it.name}"
+                class="js-inspect-target flex w-full items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-left text-xs transition hover:border-indigo-400 hover:bg-indigo-50/60 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                <div class="min-w-0">
+                  <p class="truncate font-bold text-slate-900">${it.name}</p>
+                  <p class="truncate font-mono text-[10px] text-slate-500">${it.url}</p>
+                  <p class="mt-0.5 font-mono text-[10px] font-semibold text-indigo-700">Clique para abrir análise completa →</p>
+                </div>
+                <div class="shrink-0 text-right font-mono">
+                  <span class="inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ${badgeCls}">${lbl}</span>
+                  <p class="mt-0.5 text-[10px] text-slate-400">${lat}${it.checked_at || ''}</p>
+                </div>
+              </button>
+            </li>
+          `;
+        }).join('');
+        bindLiveCardClicks();
+      }
+
+      bindLiveCardClicks();
+
+      async function refreshLive(force = false) {
+        try {
+          const resp = await fetch(`/status/ao-vivo${force ? '?force=1' : ''}`);
+          if (!resp.ok) return;
+          const data = await resp.json();
+          if (data && data.items) renderLiveItems(data.items);
+        } catch (_e) {}
+      }
+
+      if (refreshLiveBtn) {
+        refreshLiveBtn.addEventListener('click', function () {
+          refreshLive(true);
+        });
+      }
+      setInterval(function () { refreshLive(false); }, 60000);
+
+      if (form && window.fetch && window.ReadableStream) {
+        form.addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          runCheckForUrl(urlInput ? urlInput.value : '', '');
+        });
+      }
+    })();
+  </script>
+{% endblock %}
