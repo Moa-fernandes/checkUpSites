@@ -475,9 +475,10 @@ def _check_one_link(href: str) -> str | None:
     return None
 
 
+# _VERCEL_SAFE_LINKS
 def check_links(urls: list) -> tuple[list, int]:
     sample = urls[:MAX_LINKS]
-    with ThreadPoolExecutor(max_workers=8) as pool:
+    with ThreadPoolExecutor(max_workers=4 if os.environ.get('VERCEL') else 8) as pool:
         results = list(pool.map(_check_one_link, sample))
     broken = [r for r in results if r]
     return broken, len(sample)
