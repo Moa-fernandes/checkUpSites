@@ -1,25 +1,9 @@
-import os
-
-def _writable_base_dir() -> str:
-    env_dir = os.environ.get("CHECKUP_DATA_DIR")
-    if env_dir:
-        os.makedirs(env_dir, exist_ok=True)
-        return env_dir
-    try:
-        test_file = os.path.join(_writable_base_dir(), ".write_test")
-        with open(test_file, "w", encoding="utf-8") as tf:
-            tf.write("ok")
-        os.remove(test_file)
-        return _writable_base_dir()
-    except OSError:
-        tmp_dir = os.path.join("/tmp", "checkup_data")
-        os.makedirs(tmp_dir, exist_ok=True)
-        return tmp_dir
-
 """Persistência local de métricas de acesso, histórico e lista de interessados."""
 
 import csv
 import json
+import os
+import tempfile
 import threading
 from datetime import datetime
 from pathlib import Path
@@ -27,9 +11,34 @@ from pathlib import Path
 _lock = threading.Lock()
 
 
+def resolve_storage_dir(preferred_dir: Path | str | None = None) -> Path:
+    """Retorna um diretório gravável (prioriza CHECKUP_DATA_DIR, depois preferred_dir, depois /tmp)."""
+    env_dir = os.environ.get("CHECKUP_DATA_DIR", "").strip()
+    candidates: list[Path] = []
+    if env_dir:
+        candidates.append(Path(env_dir))
+    if preferred_dir is not None:
+        candidates.append(Path(preferred_dir))
+    candidates.append(Path(tempfile.gettempdir()) / "checkup_data")
+
+    for candidate in candidates:
+        try:
+            candidate.mkdir(parents=True, exist_ok=True)
+            probe = candidate / ".checkup_write_probe"
+            probe.write_text("ok", encoding="utf-8")
+            probe.unlink(missing_ok=True)
+            return candidate
+        except OSError:
+            continue
+
+    fallback = Path(tempfile.gettempdir()) / "checkup_data"
+    fallback.mkdir(parents=True, exist_ok=True)
+    return fallback
+
+
 class Storage:
     def __init__(self, base_dir: Path):
-        self.base_dir = Path(base_dir)
+        self.base_dir = resolve_storage_dir(base_dir)
         self.waitlist_file = self.base_dir / "interessados.csv"
         self.history_file = self.base_dir / "historico.json"
         self.visits_file = self.base_dir / "visitas.txt"

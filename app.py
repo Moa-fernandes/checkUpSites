@@ -47,8 +47,11 @@ def create_app(
     def get_live_status(force: bool = False) -> list[dict]:
         now = time.monotonic()
         if force or not live_cache["items"] or (now - live_cache["ts"]) > LIVE_TTL_SECONDS:
-            live_cache["items"] = live_checker(live_targets)
-            live_cache["ts"] = now
+            try:
+                live_cache["items"] = live_checker(live_targets)
+                live_cache["ts"] = now
+            except Exception:
+                app.logger.exception("Falha ao consultar alvos ao vivo")
         return live_cache["items"]
 
     @app.context_processor
@@ -81,7 +84,10 @@ def create_app(
             if not visitor_id:
                 visitor_id = uuid.uuid4().hex
                 new_id = visitor_id
-            store.record_page_view(new_id)
+            try:
+                store.record_page_view(new_id)
+            except Exception:
+                app.logger.exception("Falha ao registrar visita")
 
             response = make_response(render_home())
             response.set_cookie(
@@ -195,10 +201,3 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-def _safe_live_targets(force: bool = False):
-    try:
-        from checker import check_live_targets
-        return check_live_targets()
-    except Exception:
-        return []
