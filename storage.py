@@ -1,3 +1,21 @@
+import os
+
+def _writable_base_dir() -> str:
+    env_dir = os.environ.get("CHECKUP_DATA_DIR")
+    if env_dir:
+        os.makedirs(env_dir, exist_ok=True)
+        return env_dir
+    try:
+        test_file = os.path.join(_writable_base_dir(), ".write_test")
+        with open(test_file, "w", encoding="utf-8") as tf:
+            tf.write("ok")
+        os.remove(test_file)
+        return _writable_base_dir()
+    except OSError:
+        tmp_dir = os.path.join("/tmp", "checkup_data")
+        os.makedirs(tmp_dir, exist_ok=True)
+        return tmp_dir
+
 """Persistência local de métricas de acesso, histórico e lista de interessados."""
 
 import csv

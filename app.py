@@ -195,3 +195,10 @@ app = create_app()
 
 if __name__ == "__main__":
     app.run(debug=True)
+
+def _safe_live_targets(force: bool = False):
+    try:
+        from checker import check_live_targets
+        return check_live_targets()
+    except Exception:
+        return []
