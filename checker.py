@@ -379,6 +379,52 @@ def _route_guard(route):
         route.abort()
 
 
+
+def _fallback_render_from_html(html_text: str) -> dict:
+    """Fallback leve quando o navegador Playwright n?o est? dispon?vel (ex.: Vercel serverless)."""
+    html_str = html_text or ""
+    title = ""
+    text_len = len(html_str.strip())
+    links = []
+    images = []
+    forms = 0
+    h1_count = 0
+    try:
+        from bs4 import BeautifulSoup
+        soup = BeautifulSoup(html_str, "html.parser")
+        if soup.title and soup.title.string:
+            title = soup.title.string.strip()
+        body_text = soup.get_text(" ", strip=True) if soup.body else soup.get_text(" ", strip=True)
+        text_len = len(body_text)
+        h1_count = len(soup.find_all("h1"))
+        forms = len(soup.find_all("form"))
+        for a in soup.find_all("a", href=True):
+            links.append(a["href"].strip())
+        for img in soup.find_all("img"):
+            images.append({
+                "src": (img.get("src") or "").strip(),
+                "alt": (img.get("alt") or "").strip(),
+            })
+    except Exception:
+        pass
+
+    return {
+        "rendered": False,
+        "fallback_html": True,
+        "title": title,
+        "text_length": text_len,
+        "h1_count": h1_count,
+        "forms_count": forms,
+        "links": links,
+        "images": images,
+        "failed_requests": [],
+        "console_errors": [],
+        "page_errors": [],
+        "mobile_overflow": False,
+        "html": html_str,
+    }
+
+
 def render_page(url: str) -> dict:
     """Abre a página em Chromium (desktop e celular) e coleta dados de renderização e rede."""
     failed_requests = []
