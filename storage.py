@@ -5,10 +5,13 @@ import json
 import os
 import tempfile
 import threading
-import urllib.parse
-import urllib.request
 from datetime import datetime
 from pathlib import Path
+
+try:
+    import redis as _redis_lib
+except ImportError:  # pragma: no cover
+    _redis_lib = None
 
 _lock = threading.Lock()
 
@@ -45,28 +48,22 @@ class Storage:
         self.history_file = self.base_dir / "historico.json"
         self.visits_file = self.base_dir / "visitas.txt"
         self.visitors_file = self.base_dir / "visitantes.txt"
+        self._redis_client = None
+        self._redis_url_used = None
 
-    def _redis_config(self) -> tuple[str, str] | None:
-        url = (os.environ.get("UPSTASH_REDIS_REST_URL") or os.environ.get("KV_REST_API_URL") or "").strip().rstrip("/")
-        token = (os.environ.get("UPSTASH_REDIS_REST_TOKEN") or os.environ.get("KV_REST_API_TOKEN") or "").strip()
-        if url and token:
-            return url, token
-        return None
-
-    def _redis_cmd(self, *parts: str):
-        cfg = self._redis_config()
-        if not cfg:
+    def _get_redis(self):
+        url = (os.environ.get("REDIS_URL") or os.environ.get("REDIS_TLS_URL") or "").strip()
+        if not url or _redis_lib is None:
             return None
-        base_url, token = cfg
-        encoded = "/".join(urllib.parse.quote(str(p), safe="") for p in parts)
-        req = urllib.request.Request(
-            f"{base_url}/{encoded}",
-            headers={"Authorization": f"Bearer {token}"},
-            method="GET",
-        )
-        with urllib.request.urlopen(req, timeout=3) as resp:
-            payload = json.loads(resp.read().decode("utf-8"))
-        return payload.get("result")
+        if self._redis_client is None or self._redis_url_used != url:
+            self._redis_client = _redis_lib.from_url(
+                url,
+                decode_responses=True,
+                socket_connect_timeout=3,
+                socket_timeout=3,
+            )
+            self._redis_url_used = url
+        return self._redis_client
 
     def _read_int(self, path: Path) -> int:
         if not path.exists():
@@ -87,11 +84,12 @@ class Storage:
     def record_page_view(self, visitor_id: str | None) -> None:
         clean_vid = (visitor_id or "").strip()
         with _lock:
-            if self._redis_config():
+            client = self._get_redis()
+            if client is not None:
                 try:
-                    self._redis_cmd("incr", "checkup:visits")
+                    client.incr("checkup:visits")
                     if clean_vid:
-                        self._redis_cmd("sadd", "checkup:unique_visitors", clean_vid)
+                        client.sadd("checkup:unique_visitors", clean_vid)
                     return
                 except Exception:
                     pass
@@ -102,10 +100,11 @@ class Storage:
                     f.write(clean_vid + "\n")
 
     def get_stats(self) -> dict:
-        if self._redis_config():
+        client = self._get_redis()
+        if client is not None:
             try:
-                v_res = self._redis_cmd("get", "checkup:visits")
-                u_res = self._redis_cmd("scard", "checkup:unique_visitors")
+                v_res = client.get("checkup:visits")
+                u_res = client.scard("checkup:unique_visitors")
                 if v_res is not None or u_res is not None:
                     return {
                         "visits": int(v_res or 0),
