@@ -25,105 +25,45 @@
   <script>
     (function () {
       try {
-        const savedTheme = localStorage.getItem('checkup_theme');
-        if (savedTheme === 'dark') {
+        if (localStorage.getItem('checkup_theme') === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         }
-        const savedLang = localStorage.getItem('checkup_lang');
-        if (savedLang === 'en') {
+        if (localStorage.getItem('checkup_lang') === 'en') {
           document.documentElement.lang = 'en';
+          window.__checkupLang = 'en';
+        } else {
+          window.__checkupLang = 'pt';
         }
       } catch (_e) {}
     })();
   </script>
   <style>
     @media print {
-      @page {
-        size: A4 portrait;
-        margin: 14mm 14mm 16mm 14mm;
-      }
-      .no-print,
-      .screen-only {
-        display: none !important;
-      }
-      .print-only {
-        display: block !important;
-      }
-      html, body {
-        background: #ffffff !important;
-        color: #111827 !important;
-        font-size: 10.5pt !important;
-        line-height: 1.45 !important;
-      }
-      main {
-        max-width: 100% !important;
-        padding: 0 !important;
-        margin: 0 !important;
-      }
-      .print-avoid-break {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
+      @page { size: A4 portrait; margin: 14mm 12mm; }
+      .no-print, .screen-only { display: none !important; }
+      .print-only { display: block !important; }
+      html, body { background: #ffffff !important; color: #0f172a !important; font-size: 9.5pt !important; line-height: 1.55 !important; }
+      main { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+      .print-avoid-break, .pdf-card-block, .pdf-factor-row { break-inside: avoid; page-break-inside: avoid; }
+      .pdf-page-break { page-break-before: always; break-before: page; }
+      .pdf-card-block { margin-bottom: 14px; padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 6px; }
+      .pdf-factor-row { margin-bottom: 8px; padding: 8px 10px; border-left: 3px solid #b91c1c; background: #fffafa; }
     }
-
-    html[data-theme="dark"] body {
-      background-color: #090d16;
-      color: #f1f5f9;
-    }
-    html[data-theme="dark"] header,
-    html[data-theme="dark"] footer {
-      background-color: rgba(15, 23, 42, 0.92);
-      border-color: #1e293b;
-      color: #cbd5e1;
-    }
-    html[data-theme="dark"] .bg-white,
-    html[data-theme="dark"] .bg-white\/90 {
-      background-color: #111827 !important;
-      color: #f1f5f9 !important;
-      border-color: #1f2937 !important;
-    }
-    html[data-theme="dark"] .bg-slate-50,
-    html[data-theme="dark"] .bg-slate-50\/70,
-    html[data-theme="dark"] .bg-slate-50\/80 {
-      background-color: #0f172a !important;
-      border-color: #1e293b !important;
-    }
-    html[data-theme="dark"] .bg-slate-100 {
-      background-color: #1e293b !important;
-      color: #e2e8f0 !important;
-    }
-    html[data-theme="dark"] .text-slate-900 {
-      color: #f8fafc !important;
-    }
-    html[data-theme="dark"] .text-slate-800,
-    html[data-theme="dark"] .text-slate-700 {
-      color: #cbd5e1 !important;
-    }
-    html[data-theme="dark"] .text-slate-600,
-    html[data-theme="dark"] .text-slate-500 {
-      color: #94a3b8 !important;
-    }
-    html[data-theme="dark"] .border-slate-200,
-    html[data-theme="dark"] .border-slate-200\/90,
-    html[data-theme="dark"] .border-slate-300 {
-      border-color: #1e293b !important;
-    }
-    html[data-theme="dark"] input[type="text"],
-    html[data-theme="dark"] input[type="email"] {
-      background-color: #090d16 !important;
-      color: #f8fafc !important;
-      border-color: #334155 !important;
-    }
-    html[data-theme="dark"] .bg-gradient-to-br {
-      background-image: none !important;
-      background-color: #111827 !important;
-      border-color: #1e293b !important;
-    }
+    html[data-theme="dark"] body { background-color: #090d16; color: #f1f5f9; }
+    html[data-theme="dark"] header, html[data-theme="dark"] footer { background-color: rgba(15, 23, 42, 0.92); border-color: #1e293b; color: #cbd5e1; }
+    html[data-theme="dark"] .bg-white, html[data-theme="dark"] .bg-white\/90 { background-color: #111827 !important; color: #f1f5f9 !important; border-color: #1f2937 !important; }
+    html[data-theme="dark"] .bg-slate-50, html[data-theme="dark"] .bg-slate-50\/70, html[data-theme="dark"] .bg-slate-50\/80 { background-color: #0f172a !important; border-color: #1e293b !important; }
+    html[data-theme="dark"] .bg-slate-100 { background-color: #1e293b !important; color: #e2e8f0 !important; }
+    html[data-theme="dark"] .text-slate-900 { color: #f8fafc !important; }
+    html[data-theme="dark"] .text-slate-800, html[data-theme="dark"] .text-slate-700 { color: #cbd5e1 !important; }
+    html[data-theme="dark"] .text-slate-600, html[data-theme="dark"] .text-slate-500 { color: #94a3b8 !important; }
+    html[data-theme="dark"] .border-slate-200, html[data-theme="dark"] .border-slate-200\/90, html[data-theme="dark"] .border-slate-300 { border-color: #1e293b !important; }
+    html[data-theme="dark"] input[type="text"], html[data-theme="dark"] input[type="email"] { background-color: #090d16 !important; color: #f8fafc !important; border-color: #334155 !important; }
+    html[data-theme="dark"] .bg-gradient-to-br { background-image: none !important; background-color: #111827 !important; border-color: #1e293b !important; }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-[#f8fafc] text-slate-900 antialiased selection:bg-indigo-600 selection:text-white">
-  <a href="#conteudo"
-     data-i18n="skip_to_content"
+<body class="min-h-screen flex flex-col overflow-x-clip bg-[#f8fafc] text-slate-900 antialiased selection:bg-indigo-600 selection:text-white">
+  <a href="#conteudo" data-i18n="skip_to_content"
      class="no-print sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 rounded-lg bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500">
     Pular para o conteúdo
   </a>
@@ -170,11 +110,7 @@
     {% block content %}{% endblock %}
   </main>
 
-  <!-- Modal de pagamento Pix (R$ 5,99) + envio por e-mail para JSON / PDF -->
-  <div id="paywall-modal"
-       role="dialog"
-       aria-modal="true"
-       aria-labelledby="paywall-title"
+  <div id="paywall-modal" role="dialog" aria-modal="true" aria-labelledby="paywall-title"
        class="no-print fixed inset-0 z-50 hidden items-center justify-center bg-slate-950/65 p-4 backdrop-blur-xs">
     <div class="w-full max-w-lg rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl sm:p-7">
       <div class="flex items-start justify-between gap-3">
@@ -187,9 +123,7 @@
           </h2>
         </div>
         <button type="button" id="paywall-close" aria-label="Fechar modal"
-          class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900">
-          ✕
-        </button>
+          class="rounded-lg p-1.5 text-slate-500 hover:bg-slate-100 hover:text-slate-900">✕</button>
       </div>
 
       <p data-i18n="paywall_desc" class="mt-2.5 text-sm leading-relaxed text-slate-600">
@@ -213,9 +147,7 @@
         </div>
 
         <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 sm:col-span-5">
-          <img src="{{ url_for('static', filename='pix-qrcode.png') }}"
-               alt="QR Code Pix R$ 5,99"
-               class="h-36 w-36 rounded-lg object-contain">
+          <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix R$ 5,99" class="h-36 w-36 rounded-lg object-contain">
           <span class="mt-1.5 font-mono text-[10px] font-semibold text-slate-500">Pix R$ 5,99</span>
         </div>
       </div>
@@ -235,23 +167,16 @@
 
   <footer class="no-print border-t border-slate-200 bg-white">
     <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 text-sm text-slate-600 sm:px-6">
-      <!-- Suporte do projeto via Pix com QR Code -->
       <div class="rounded-3xl border border-indigo-200/90 bg-indigo-50/60 p-5 sm:p-6">
         <div class="grid gap-5 md:grid-cols-12 md:items-center">
           <div class="space-y-2 md:col-span-8">
-            <p data-i18n="support_badge" class="text-xs font-bold uppercase tracking-wider text-indigo-800">
-              Suporte do projeto
-            </p>
-            <h2 data-i18n="support_title" class="text-lg font-extrabold text-slate-900">
-              Apoie o checkUp via Pix
-            </h2>
+            <p data-i18n="support_badge" class="text-xs font-bold uppercase tracking-wider text-indigo-800">Suporte do projeto</p>
+            <h2 data-i18n="support_title" class="text-lg font-extrabold text-slate-900">Apoie o checkUp via Pix</h2>
             <p data-i18n="support_desc" class="text-xs leading-relaxed text-slate-700 sm:text-sm">
               Contribuição voluntária para manter o diagnóstico gratuito e evoluir novas checagens de infraestrutura e acessibilidade.
             </p>
             <div class="flex flex-wrap items-center gap-2 pt-1">
-              <code id="pix-key-text" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-semibold text-slate-900">
-                {{ pix_key }}
-              </code>
+              <code id="pix-key-text" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-semibold text-slate-900">{{ pix_key }}</code>
               <button type="button" id="btn-copy-pix" data-i18n="copy_pix_btn"
                 class="inline-flex min-h-[36px] items-center rounded-xl bg-indigo-700 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-800">
                 Copiar chave Pix
@@ -259,11 +184,8 @@
               <span id="pix-copied-msg" class="hidden font-mono text-xs font-semibold text-emerald-700">OK</span>
             </div>
           </div>
-
           <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 md:col-span-4">
-            <img src="{{ url_for('static', filename='pix-qrcode.png') }}"
-                 alt="QR Code Pix"
-                 class="h-36 w-36 rounded-lg object-contain">
+            <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix" class="h-36 w-36 rounded-lg object-contain">
             <span class="mt-1.5 font-mono text-[11px] text-slate-500">Pix · {{ pix_key }}</span>
           </div>
         </div>
@@ -300,9 +222,11 @@
           url_placeholder: 'exemplo.com.br',
           check_btn: 'Verificar site',
           wait_note: 'A análise abre a página em um navegador real e testa SSL, rede, qualidade e acessibilidade.',
-          live_title: 'Status ao vivo — 3 alvos públicos abertos',
+          live_title: 'Status ao vivo — alvos públicos abertos (clique para analisar)',
           live_refresh: 'Atualizar agora',
-          live_lgpd_note: 'Monitora apenas 3 fontes públicas abertas (transporte e rotas aéreas abertas), em conformidade com a LGPD.',
+          live_click_hint: 'Clique para abrir análise completa →',
+          live_open_site: 'Abrir site ↗',
+          live_lgpd_note: 'Monitora endpoints públicos abertos de referência e permite clicar em qualquer card para rodar e abrir o diagnóstico completo daquele alvo.',
           waitlist_title: 'Quer ser avisado sobre as novidades?',
           waitlist_desc: 'Esta verificação automática não substitui uma revisão feita por uma pessoa, leitores de tela ou testes manuais. Deixe seu e-mail para acompanhar as próximas melhorias.',
           waitlist_btn: 'Quero ser avisado',
@@ -318,8 +242,16 @@
           paywall_title: 'Receber relatório (JSON ou PDF/Impressão)',
           paywall_desc: 'Valor definido: R$ 5,99 via Pix. Informe seu e-mail para registrar o envio do JSON ou abrir a versão de impressão/PDF.',
           paywall_email_label: 'Seu e-mail para receber o relatório',
+          invalid_email: 'Informe um e-mail válido para receber o relatório.',
           cancel_btn: 'Cancelar',
           continue_send_btn: 'Confirmar e gerar / enviar',
+          paid_cta_label: 'Baixe agora os arquivos completos por R$5,99',
+          btn_download_json: 'Baixar JSON',
+          btn_print_pdf: 'Imprimir / PDF',
+          report_eyebrow: 'Relatório da análise',
+          report_heading: 'Resultado da verificação',
+          what_to_fix: 'O que corrigir',
+          general_summary_title: 'Resumo Geral Técnico — Riscos e Fatores que Podem Incapacitar ou Comprometer o Site'
         },
         en: {
           skip_to_content: 'Skip to content',
@@ -331,9 +263,11 @@
           url_placeholder: 'example.com',
           check_btn: 'Check website',
           wait_note: 'The scan opens the page in a real browser and checks SSL, network, code quality, and accessibility.',
-          live_title: 'Live status — 3 open public targets',
+          live_title: 'Live status — open public targets (click to inspect)',
           live_refresh: 'Refresh now',
-          live_lgpd_note: 'Monitors only 3 open public sources (public transit & open flight routes) in compliance with LGPD.',
+          live_click_hint: 'Click to open full analysis →',
+          live_open_site: 'Open site ↗',
+          live_lgpd_note: 'Monitors open public reference endpoints and lets you click any card to run and open a full diagnostic for that target.',
           waitlist_title: 'Want to be notified about updates?',
           waitlist_desc: 'Automated checks do not replace human review, screen readers, or manual testing. Leave your email for upcoming improvements.',
           waitlist_btn: 'Notify me',
@@ -345,17 +279,59 @@
           created_by: 'Created by',
           unique_visitors: 'Unique visitors',
           page_views: 'Page views',
-          paywall_badge: 'Deposit / Pix • R$ 5,99',
+          paywall_badge: 'Deposit / Pix • R$ 5.99',
           paywall_title: 'Receive report (JSON or PDF/Print)',
           paywall_desc: 'Set amount: R$ 5.99 via Pix. Enter your email to log JSON delivery or open Print/PDF view.',
           paywall_email_label: 'Your email to receive the report',
+          invalid_email: 'Please enter a valid email address to receive the report.',
           cancel_btn: 'Cancel',
           continue_send_btn: 'Confirm & generate / send',
-        },
+          paid_cta_label: 'Download full audit files now for R$5.99',
+          btn_download_json: 'Download JSON',
+          btn_print_pdf: 'Print / PDF',
+          report_eyebrow: 'Analysis Report',
+          report_heading: 'Verification Result',
+          what_to_fix: 'What to Fix',
+          general_summary_title: 'General Technical Summary — Risks and Factors That Can Incapacitate or Compromise the Site'
+        }
       };
+
+      function syncPdfLangBox(lang) {
+        const art = document.getElementById('relatorio-tecnico-pdf');
+        const dataEl = document.getElementById('dados-relatorio');
+        if (!art || !dataEl) return;
+        let box = document.getElementById('pdf-en-summary-box');
+        if (lang === 'en') {
+          const data = JSON.parse(dataEl.textContent);
+          if (!box) {
+            box = document.createElement('section');
+            box.id = 'pdf-en-summary-box';
+            box.className = 'pdf-page-break pdf-card-block';
+            art.appendChild(box);
+          }
+          const m = data.metrics || {};
+          const syn = data.synthesis || {};
+          const factorsHtml = (syn.factors || []).map(function (f) {
+            return '<div class="pdf-factor-row">' +
+              '<strong>[' + (f.severity || 'HIGH') + '] ' + (f.area || '') + '</strong>' +
+              '<p style="margin:4px 0 0 0;">' + (f.impact || '') + '</p>' +
+              (f.action ? '<p style="margin:4px 0 0 0;font-family:monospace;font-size:8.5pt;"><strong>Action:</strong> ' + f.action + '</p>' : '') +
+            '</div>';
+          }).join('');
+          box.innerHTML =
+            '<h2 style="font-size:11.5pt;font-weight:800;text-transform:uppercase;margin:0 0 8px 0;">General Technical Summary — Site Incapacitation & Risk Assessment</h2>' +
+            '<p style="margin:0 0 6px 0;"><strong>Target URL:</strong> ' + (data.url || '') + ' | <strong>Score:</strong> ' + (data.score ?? 0) + '/100 | <strong>Findings:</strong> ' + (data.total_issues ?? 0) + '</p>' +
+            '<p style="margin:0 0 8px 0;"><strong>Transport & TLS:</strong> ' + (m.is_https ? 'HTTPS' : 'HTTP') + ' (' + (m.tls_version || 'TLS N/A') + ') | <strong>TTFB:</strong> ' + (m.ttfb_ms ?? 0) + ' ms | <strong>Redirects:</strong> ' + (m.redirects ?? 0) + ' | <strong>Failed Requests:</strong> ' + (m.failed_requests_count ?? 0) + '</p>' +
+            '<p style="margin:0 0 10px 0;"><strong>Consolidated Verdict:</strong> ' + (syn.verdict || '') + '</p>' +
+            (factorsHtml || '<p style="margin:0;">No immediate incapacitating blockers detected in this audit pass.</p>');
+        } else if (box) {
+          box.remove();
+        }
+      }
 
       function applyLanguage(lang) {
         const chosen = lang === 'en' ? 'en' : 'pt';
+        window.__checkupLang = chosen;
         document.documentElement.lang = chosen === 'en' ? 'en' : 'pt-BR';
         try { localStorage.setItem('checkup_lang', chosen); } catch (_e) {}
         const sel = document.getElementById('lang-selector');
@@ -367,10 +343,16 @@
           if (dict[key]) el.textContent = dict[key];
         });
         const urlInput = document.getElementById('url');
-        if (urlInput && dict.url_placeholder) {
-          urlInput.placeholder = dict.url_placeholder;
-        }
+        if (urlInput && dict.url_placeholder) urlInput.placeholder = dict.url_placeholder;
+        const badgeEl = document.getElementById('loading-badge');
+        if (badgeEl) badgeEl.textContent = chosen === 'en' ? 'analyzing' : 'analisando';
+
+        syncPdfLangBox(chosen);
+        window.dispatchEvent(new CustomEvent('checkup:langchange', { detail: { lang: chosen } }));
       }
+
+      window.checkupApplyLanguage = applyLanguage;
+      window.checkupSyncPdfLangBox = syncPdfLangBox;
 
       function applyTheme(theme) {
         const isDark = theme === 'dark';
@@ -385,17 +367,12 @@
       }
 
       const langSelect = document.getElementById('lang-selector');
-      if (langSelect) {
-        langSelect.addEventListener('change', function () {
-          applyLanguage(langSelect.value);
-        });
-      }
+      if (langSelect) langSelect.addEventListener('change', function () { applyLanguage(langSelect.value); });
 
       const themeBtn = document.getElementById('theme-toggle');
       if (themeBtn) {
         themeBtn.addEventListener('click', function () {
-          const cur = document.documentElement.getAttribute('data-theme');
-          applyTheme(cur === 'dark' ? 'light' : 'dark');
+          applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
         });
       }
 
@@ -404,9 +381,7 @@
       if (copyPixBtn) {
         copyPixBtn.addEventListener('click', function () {
           const doneMsg = document.getElementById('pix-copied-msg');
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(pixKey).catch(function () {});
-          }
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pixKey).catch(function () {});
           if (doneMsg) {
             doneMsg.classList.remove('hidden');
             setTimeout(function () { doneMsg.classList.add('hidden'); }, 2000);
@@ -424,14 +399,8 @@
 
       window.requestPaidReportAction = function (callback) {
         pendingExportCallback = callback;
-        if (emailErr) {
-          emailErr.classList.add('hidden');
-          emailErr.textContent = '';
-        }
-        if (!modal) {
-          if (typeof callback === 'function') callback('');
-          return;
-        }
+        if (emailErr) { emailErr.classList.add('hidden'); emailErr.textContent = ''; }
+        if (!modal) { if (typeof callback === 'function') callback(''); return; }
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         if (emailInput) emailInput.focus();
@@ -448,9 +417,10 @@
       if (continueBtn) {
         continueBtn.addEventListener('click', function () {
           const addr = emailInput ? emailInput.value.trim() : '';
+          const curLang = window.__checkupLang === 'en' ? 'en' : 'pt';
           if (!addr || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)) {
             if (emailErr) {
-              emailErr.textContent = 'Informe um e-mail válido para receber o relatório.';
+              emailErr.textContent = I18N[curLang].invalid_email;
               emailErr.classList.remove('hidden');
             }
             return;

@@ -1,10 +1,12 @@
-"""Persistência local de métricas de acesso, histórico e lista de interessados."""
+"""Persistência de métricas de acesso, histórico e lista de interessados."""
 
 import csv
 import json
 import os
 import tempfile
 import threading
+import urllib.parse
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 
@@ -44,6 +46,28 @@ class Storage:
         self.visits_file = self.base_dir / "visitas.txt"
         self.visitors_file = self.base_dir / "visitantes.txt"
 
+    def _redis_config(self) -> tuple[str, str] | None:
+        url = (os.environ.get("UPSTASH_REDIS_REST_URL") or os.environ.get("KV_REST_API_URL") or "").strip().rstrip("/")
+        token = (os.environ.get("UPSTASH_REDIS_REST_TOKEN") or os.environ.get("KV_REST_API_TOKEN") or "").strip()
+        if url and token:
+            return url, token
+        return None
+
+    def _redis_cmd(self, *parts: str):
+        cfg = self._redis_config()
+        if not cfg:
+            return None
+        base_url, token = cfg
+        encoded = "/".join(urllib.parse.quote(str(p), safe="") for p in parts)
+        req = urllib.request.Request(
+            f"{base_url}/{encoded}",
+            headers={"Authorization": f"Bearer {token}"},
+            method="GET",
+        )
+        with urllib.request.urlopen(req, timeout=3) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+        return payload.get("result")
+
     def _read_int(self, path: Path) -> int:
         if not path.exists():
             return 0
@@ -55,14 +79,41 @@ class Storage:
             return 0
         return sum(1 for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
 
-    def record_page_view(self, new_visitor_id: str | None) -> None:
+    def _existing_visitor_ids(self) -> set[str]:
+        if not self.visitors_file.exists():
+            return set()
+        return {line.strip() for line in self.visitors_file.read_text(encoding="utf-8").splitlines() if line.strip()}
+
+    def record_page_view(self, visitor_id: str | None) -> None:
+        clean_vid = (visitor_id or "").strip()
         with _lock:
+            if self._redis_config():
+                try:
+                    self._redis_cmd("incr", "checkup:visits")
+                    if clean_vid:
+                        self._redis_cmd("sadd", "checkup:unique_visitors", clean_vid)
+                    return
+                except Exception:
+                    pass
+
             self.visits_file.write_text(str(self._read_int(self.visits_file) + 1), encoding="utf-8")
-            if new_visitor_id:
+            if clean_vid and clean_vid not in self._existing_visitor_ids():
                 with self.visitors_file.open("a", encoding="utf-8") as f:
-                    f.write(new_visitor_id + "\n")
+                    f.write(clean_vid + "\n")
 
     def get_stats(self) -> dict:
+        if self._redis_config():
+            try:
+                v_res = self._redis_cmd("get", "checkup:visits")
+                u_res = self._redis_cmd("scard", "checkup:unique_visitors")
+                if v_res is not None or u_res is not None:
+                    return {
+                        "visits": int(v_res or 0),
+                        "visitors": int(u_res or 0),
+                    }
+            except Exception:
+                pass
+
         return {
             "visits": self._read_int(self.visits_file),
             "visitors": self._count_lines(self.visitors_file),
