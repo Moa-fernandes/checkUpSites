@@ -1,6 +1,7 @@
 """Verificações de qualidade, acessibilidade e infraestrutura do checkUp."""
 
 import ipaddress
+import os
 import math
 import re
 import socket
@@ -408,6 +409,7 @@ def _fallback_render_from_html(html_text: str) -> dict:
     except Exception:
         pass
 
+    broken_imgs = sum(1 for im in images if not im.get("src"))
     return {
         "rendered": False,
         "fallback_html": True,
@@ -417,9 +419,31 @@ def _fallback_render_from_html(html_text: str) -> dict:
         "forms_count": forms,
         "links": links,
         "images": images,
+        "rendered_kb": round(len(html_str.encode("utf-8")) / 1024, 1),
+        "colors": [],
+        "quality": {
+            "totalImages": len(images),
+            "brokenImages": broken_imgs,
+            "brokenImageExamples": [],
+            "duplicateIds": 0,
+            "duplicateIdExamples": [],
+            "placeholderText": None,
+            "hasDescription": False,
+            "links": list(dict.fromkeys(u for u in links if u.startswith(("http://", "https://")))),
+            "scriptCount": 0,
+            "stylesheetCount": 0,
+            "blockingHeadScripts": [],
+            "hasDebugArtifacts": False,
+            "hasCanonical": False,
+            "hasNoIndex": False,
+            "hasOgTags": False,
+            "hasMain": False,
+            "hasNav": False,
+        },
         "failed_requests": [],
         "console_errors": [],
         "page_errors": [],
+        "js_errors": [],
         "mobile_overflow": False,
         "html": html_str,
     }
