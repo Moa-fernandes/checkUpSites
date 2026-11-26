@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -76,6 +76,14 @@
       </a>
 
       <div class="flex items-center gap-2">
+        <button type="button" id="btn-header-support" data-i18n="header_support_btn"
+          class="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 px-3 py-1.5 text-xs font-bold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          <svg class="h-4 w-4 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
+          </svg>
+          <span>Suporte ao projeto</span>
+        </button>
+
         <label for="lang-selector" class="sr-only">Idioma / Language</label>
         <select id="lang-selector" aria-label="Idioma / Language"
           class="min-h-[40px] rounded-xl border border-slate-300 bg-white px-2.5 py-1.5 font-mono text-xs font-bold text-slate-800 transition hover:border-indigo-300 focus:outline-none focus:ring-2 focus:ring-indigo-600">
@@ -110,6 +118,59 @@
     {% block content %}{% endblock %}
   </main>
 
+  <div id="support-donation-modal" role="dialog" aria-modal="true" aria-labelledby="support-modal-title"
+       class="no-print fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-slate-950/70 p-3 sm:p-6 backdrop-blur-xs">
+    <div class="relative my-auto w-full max-w-xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-8">
+      <button type="button" id="support-modal-close" aria-label="Fechar modal de apoio"
+        class="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-base font-extrabold text-slate-600 transition hover:border-slate-300 hover:bg-slate-100 hover:text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+        ✕
+      </button>
+
+      <div class="pr-12">
+        <span data-i18n="support_modal_badge" class="inline-block rounded-full bg-indigo-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-900">
+          Apoio e doação voluntária
+        </span>
+        <h2 id="support-modal-title" data-i18n="support_modal_title" class="mt-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
+          Apoie o checkUp
+        </h2>
+        <p data-i18n="support_modal_desc" class="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
+          Contribuição livre e voluntária para manter o diagnóstico gratuito e apoiar novas melhorias do projeto.
+        </p>
+      </div>
+
+      <div class="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:grid-cols-12 sm:items-center">
+        <div class="space-y-3 sm:col-span-7">
+          <p data-i18n="pix_key_label" class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Chave Pix</p>
+          <p class="break-all rounded-xl border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-bold text-slate-900">
+            {{ pix_key }}
+          </p>
+          <div class="flex flex-wrap items-center gap-2">
+            <button type="button" id="btn-modal-copy-pix" data-i18n="copy_pix_btn"
+              class="inline-flex min-h-[38px] items-center rounded-xl bg-indigo-700 px-3.5 py-2 text-xs font-bold text-white transition hover:bg-indigo-800">
+              Copiar chave Pix
+            </button>
+            <span id="modal-pix-copied-msg" class="hidden font-mono text-xs font-semibold text-emerald-700">OK</span>
+          </div>
+          <p data-i18n="support_modal_note" class="text-xs font-semibold text-emerald-700">
+            Doação livre via Pix ou QR Code. Muito obrigado pelo apoio!
+          </p>
+        </div>
+
+        <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 sm:col-span-5">
+          <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix de apoio ao projeto" class="h-36 w-36 rounded-lg object-contain sm:h-40 sm:w-40">
+          <span data-i18n="support_qr_caption" class="mt-1.5 font-mono text-[11px] font-semibold text-slate-500">QR Code Pix · Apoio</span>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end">
+        <button type="button" id="support-modal-done" data-i18n="close_btn"
+          class="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:text-sm">
+          Fechar
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div id="paywall-modal" role="dialog" aria-modal="true" aria-labelledby="paywall-title"
        class="no-print fixed inset-0 z-50 hidden items-center justify-center overflow-y-auto bg-slate-950/70 p-3 sm:p-6 backdrop-blur-xs">
     <div class="relative my-auto w-full max-w-2xl max-h-[92vh] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-5 shadow-2xl sm:p-8">
@@ -120,13 +181,13 @@
 
       <div class="pr-12">
         <span data-i18n="paywall_badge" class="inline-block rounded-full bg-indigo-100 px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-indigo-900">
-          Depósito / Pix • R$ 5,99
+          Apoio voluntário • Sem cobrança obrigatória
         </span>
         <h2 id="paywall-title" data-i18n="paywall_title" class="mt-2 text-xl font-extrabold text-slate-900 sm:text-2xl">
           Receber relatório completo (PDF ou JSON)
         </h2>
         <p data-i18n="paywall_desc" class="mt-2 text-xs leading-relaxed text-slate-600 sm:text-sm">
-          Valor definido: <strong class="font-mono text-slate-900">R$ 5,99</strong> via Pix. Escolha o idioma do documento abaixo e informe seu e-mail para gerar o PDF ou baixar o JSON.
+          Se puder dar um suporte ao projeto, a chave Pix e o QR Code estão ao lado. Escolha o idioma do documento abaixo e informe seu e-mail para gerar o PDF ou baixar o JSON.
         </p>
       </div>
 
@@ -158,7 +219,7 @@
           <p class="break-all rounded-xl border border-slate-300 bg-white px-3 py-2 font-mono text-xs font-bold text-slate-900">
             {{ pix_key }}
           </p>
-          <p class="font-mono text-sm font-extrabold text-emerald-700">Valor: R$ 5,99</p>
+          <p class="text-xs font-semibold text-emerald-700">Apoio livre e voluntário — copie a chave ou use o QR Code. Abraços!</p>
 
           <label for="paywall-email-input" data-i18n="paywall_email_label" class="block pt-1 text-xs font-bold text-slate-700">
             Seu e-mail para receber o relatório
@@ -169,8 +230,8 @@
         </div>
 
         <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 sm:col-span-5">
-          <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix R$ 5,99" class="h-36 w-36 rounded-lg object-contain sm:h-40 sm:w-40">
-          <span class="mt-1.5 font-mono text-[11px] font-semibold text-slate-500">Pix R$ 5,99</span>
+          <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix de apoio ao projeto" class="h-36 w-36 rounded-lg object-contain sm:h-40 sm:w-40">
+          <span class="mt-1.5 font-mono text-[11px] font-semibold text-slate-500">QR Code Pix · Apoio</span>
         </div>
       </div>
 
@@ -236,6 +297,14 @@
       const I18N = {
         pt: {
           skip_to_content: 'Pular para o conteúdo',
+          header_support_btn: 'Suporte ao projeto',
+          support_modal_badge: 'Apoio e doação voluntária',
+          support_modal_title: 'Apoie o checkUp',
+          support_modal_desc: 'Contribuição livre e voluntária para manter o diagnóstico gratuito e apoiar novas melhorias do projeto.',
+          pix_key_label: 'Chave Pix',
+          support_modal_note: 'Doação livre via Pix ou QR Code. Muito obrigado pelo apoio!',
+          support_qr_caption: 'QR Code Pix · Apoio',
+          close_btn: 'Fechar',
           privacy_link: 'Política de privacidade',
           hero_badge: 'Diagnóstico gratuito em tempo real',
           hero_tags: 'SSL · Infraestrutura · Acessibilidade · Qualidade',
@@ -260,9 +329,9 @@
           created_by: 'Criado por',
           unique_visitors: 'Visitantes únicos',
           page_views: 'Acessos à página',
-          paywall_badge: 'Depósito / Pix • R$ 5,99',
+          paywall_badge: 'Apoio voluntário • Sem cobrança obrigatória',
           paywall_title: 'Receber relatório (JSON ou PDF/Impressão)',
-          paywall_desc: 'Valor definido: R$ 5,99 via Pix. Informe seu e-mail para registrar o envio do JSON ou abrir a versão de impressão/PDF.',
+          paywall_desc: 'PDF disponível — é só colocar seu e-mail que eu mando! Se quiser dar um apoio ao projeto, copie a chave Pix ou use o QR Code. Abraços!',
           paywall_email_label: 'Seu e-mail para receber o relatório',
           invalid_email: 'Informe um e-mail válido para receber o relatório.',
           cancel_btn: 'Cancelar',
@@ -277,6 +346,14 @@
         },
         en: {
           skip_to_content: 'Skip to content',
+          header_support_btn: 'Project support',
+          support_modal_badge: 'Voluntary support & donation',
+          support_modal_title: 'Support checkUp',
+          support_modal_desc: 'Free, voluntary contribution to keep diagnostics free and support new project improvements.',
+          pix_key_label: 'Pix Key',
+          support_modal_note: 'Voluntary donation via Pix or QR Code. Thank you for your support!',
+          support_qr_caption: 'Pix QR Code · Support',
+          close_btn: 'Close',
           privacy_link: 'Privacy policy',
           hero_badge: 'Free real-time diagnostic',
           hero_tags: 'SSL · Infrastructure · Accessibility · Quality',
@@ -301,9 +378,9 @@
           created_by: 'Created by',
           unique_visitors: 'Unique visitors',
           page_views: 'Page views',
-          paywall_badge: 'Deposit / Pix • R$ 5.99',
+          paywall_badge: 'Voluntary support • Free report',
           paywall_title: 'Receive report (JSON or PDF/Print)',
-          paywall_desc: 'Set amount: R$ 5.99 via Pix. Enter your email to log JSON delivery or open Print/PDF view.',
+          paywall_desc: 'PDF ready — just enter your email and I\'ll send it! If you want to support the project, copy the Pix key or scan the QR code. Cheers!',
           paywall_email_label: 'Your email to receive the report',
           invalid_email: 'Please enter a valid email address to receive the report.',
           cancel_btn: 'Cancel',
@@ -314,7 +391,7 @@
           report_eyebrow: 'Analysis Report',
           report_heading: 'Verification Result',
           what_to_fix: 'What to Fix',
-          general_summary_title: 'General Technical Summary — Risks and Factors That Can Incapacitate or Compromise the Site'
+          general_summary_title: 'General Technical Summary — Risks and Factors That Can Impair or Compromise the Site'
         }
       };
 
@@ -331,7 +408,13 @@
         const dict = I18N[chosen];
         document.querySelectorAll('[data-i18n]').forEach(function (el) {
           const key = el.getAttribute('data-i18n');
-          if (dict[key]) el.textContent = dict[key];
+          if (!dict[key]) return;
+          const span = el.querySelector('span');
+          if (span) {
+            span.textContent = dict[key];
+          } else {
+            el.textContent = dict[key];
+          }
         });
         const urlInput = document.getElementById('url');
         if (urlInput && dict.url_placeholder) urlInput.placeholder = dict.url_placeholder;
@@ -380,6 +463,43 @@
         });
       }
 
+      const supportModal = document.getElementById('support-donation-modal');
+      const headerSupportBtn = document.getElementById('btn-header-support');
+      const supportCloseBtn = document.getElementById('support-modal-close');
+      const supportDoneBtn = document.getElementById('support-modal-done');
+      const modalCopyPixBtn = document.getElementById('btn-modal-copy-pix');
+
+      function openSupportModal() {
+        if (!supportModal) return;
+        supportModal.classList.remove('hidden');
+        supportModal.classList.add('flex');
+      }
+
+      function hideSupportModal() {
+        if (!supportModal) return;
+        supportModal.classList.add('hidden');
+        supportModal.classList.remove('flex');
+      }
+
+      if (headerSupportBtn) headerSupportBtn.addEventListener('click', openSupportModal);
+      if (supportCloseBtn) supportCloseBtn.addEventListener('click', hideSupportModal);
+      if (supportDoneBtn) supportDoneBtn.addEventListener('click', hideSupportModal);
+      if (supportModal) {
+        supportModal.addEventListener('click', function (ev) {
+          if (ev.target === supportModal) hideSupportModal();
+        });
+      }
+      if (modalCopyPixBtn) {
+        modalCopyPixBtn.addEventListener('click', function () {
+          const doneMsg = document.getElementById('modal-pix-copied-msg');
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pixKey).catch(function () {});
+          if (doneMsg) {
+            doneMsg.classList.remove('hidden');
+            setTimeout(function () { doneMsg.classList.add('hidden'); }, 2000);
+          }
+        });
+      }
+
       let pendingExportCallback = null;
       const modal = document.getElementById('paywall-modal');
       const closeBtn = document.getElementById('paywall-close');
@@ -414,8 +534,9 @@
         });
       }
       document.addEventListener('keydown', function (ev) {
-        if (ev.key === 'Escape' && modal && !modal.classList.contains('hidden')) {
-          hidePaywallModal();
+        if (ev.key === 'Escape') {
+          if (supportModal && !supportModal.classList.contains('hidden')) hideSupportModal();
+          if (modal && !modal.classList.contains('hidden')) hidePaywallModal();
         }
       });
       if (continueBtn) {
@@ -795,7 +916,7 @@
     translated.delivery = {
       method: "email_and_download",
       recipient_email: recipientEmail || "",
-      amount_brl: 5.99
+      voluntary_support: true
     };
     return translated;
   };
