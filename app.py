@@ -291,6 +291,7 @@ def create_app(
 
 
             "live_targets": get_live_status(force=False),
+            "live_items": get_live_status(force=False),
 
 
 

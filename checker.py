@@ -19108,6 +19108,123 @@ def _has_accessible_name(tag, soup) -> bool:
 
 
 
+
+def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
+    """Identifica de forma indicativa linguagens, frameworks, bibliotecas e plataformas do site."""
+    headers = {k.lower(): str(v) for k, v in ((raw_info or {}).get("headers") or {}).items()}
+    server = str((raw_info or {}).get("server") or "")
+    cdn = str((raw_info or {}).get("cdn") or "")
+    powered_by = str((raw_info or {}).get("powered_by") or headers.get("x-powered-by") or "")
+    cookies_str = " | ".join((raw_info or {}).get("set_cookies") or [])
+
+    html_raw = str((raw_info or {}).get("html") or "")
+    html_ren = str((rendered or {}).get("html") or "")
+    combined_html = f"{html_raw}\n{html_ren}"
+    low_html = combined_html.lower()
+    header_blob = f"{server} {cdn} {powered_by} {cookies_str} " + " ".join(f"{k}: {v}" for k, v in headers.items())
+    low_headers = header_blob.lower()
+
+    languages: list[str] = []
+    frameworks: list[str] = []
+    libraries: list[str] = []
+    platforms: list[str] = []
+
+    def add_unique(target: list[str], label: str) -> None:
+        if label not in target:
+            target.append(label)
+
+    # Linguagens e runtimes
+    if "php" in low_headers or ".php" in low_html or "phpsessid" in low_headers or "wp-" in low_html:
+        add_unique(languages, "PHP")
+    if "asp.net" in low_headers or "x-aspnet-version" in headers or ".aspx" in low_html:
+        add_unique(languages, "C# / ASP.NET")
+    if "__next_data__" in low_html or "/_next/" in low_html or "next.js" in low_headers or "node" in powered_by.lower() or "express" in low_headers:
+        add_unique(languages, "JavaScript / Node.js")
+    if "python" in low_headers or "werkzeug" in low_headers or "gunicorn" in low_headers or "uvicorn" in low_headers or "django" in low_headers or "flask" in low_headers:
+        add_unique(languages, "Python")
+    if "jsessionid" in low_headers or "java" in low_headers or "spring" in low_headers or "tomcat" in low_headers:
+        add_unique(languages, "Java")
+    if "phusion passenger" in low_headers or "ruby" in low_headers or "rails" in low_headers:
+        add_unique(languages, "Ruby")
+    if "golang" in low_headers or "go-http-client" in low_headers:
+        add_unique(languages, "Go")
+    if "<script" in low_html or 'type="module"' in low_html:
+        add_unique(languages, "JavaScript")
+
+    # Frameworks / CMS / Plataformas
+    if "/_next/" in low_html or "__next_data__" in low_html or "next.js" in low_headers or "x-nextjs-cache" in headers:
+        add_unique(frameworks, "Next.js")
+    if "__nuxt" in low_html or "/_nuxt/" in low_html or "nuxt" in low_html:
+        add_unique(frameworks, "Nuxt")
+    if "react" in low_html or "data-reactroot" in low_html or "react-dom" in low_html or "__react" in low_html:
+        add_unique(frameworks, "React")
+    if "ng-version" in low_html or "angular" in low_html or "_nghost-" in low_html:
+        add_unique(frameworks, "Angular")
+    if "vue" in low_html and ("data-v-" in low_html or "vuejs" in low_html or "vue.js" in low_html or "vue.global" in low_html):
+        add_unique(frameworks, "Vue.js")
+    if "__sveltekit" in low_html or "svelte" in low_html:
+        add_unique(frameworks, "Svelte / SvelteKit")
+    if "astro" in low_html or "data-astro-cid" in low_html:
+        add_unique(frameworks, "Astro")
+    if "wp-content" in low_html or "wp-includes" in low_html or "wordpress" in low_html:
+        add_unique(frameworks, "WordPress")
+    if "woocommerce" in low_html or "wc-blocks" in low_html:
+        add_unique(frameworks, "WooCommerce")
+    if "cdn.shopify.com" in low_html or "shopify" in low_headers or "myshopify" in low_html:
+        add_unique(frameworks, "Shopify")
+    if "joomla" in low_html:
+        add_unique(frameworks, "Joomla")
+    if "drupal" in low_html or "drupal.settings" in low_html:
+        add_unique(frameworks, "Drupal")
+    if "webflow" in low_html or "w-webflow-badge" in low_html:
+        add_unique(frameworks, "Webflow")
+    if "wix.com" in low_html or "wixstatic.com" in low_html:
+        add_unique(frameworks, "Wix")
+    if "laravel" in low_html or "laravel_session" in low_headers:
+        add_unique(frameworks, "Laravel")
+
+    # Bibliotecas / UI / Ferramentas front-end
+    if "tailwind" in low_html or re.search(r'class="[^"]*(?:sm:|md:|lg:|xl:|px-|py-|bg-slate-|text-indigo-|rounded-)', combined_html):
+        add_unique(libraries, "Tailwind CSS")
+    if "bootstrap" in low_html or re.search(r'class="[^"]*(?:container-fluid|row\b|col-md-|btn-primary)', combined_html):
+        add_unique(libraries, "Bootstrap")
+    if "jquery" in low_html or re.search(r"jquery[.-][\d.]*(?:\.min)?\.js", low_html):
+        add_unique(libraries, "jQuery")
+    if "three.js" in low_html or "three.min.js" in low_html or "three.module.js" in low_html:
+        add_unique(libraries, "Three.js")
+    if "chart.js" in low_html or "chart.min.js" in low_html:
+        add_unique(libraries, "Chart.js")
+    if "gsap" in low_html or "scrolltrigger" in low_html:
+        add_unique(libraries, "GSAP")
+    if "axios" in low_html:
+        add_unique(libraries, "Axios")
+    if "alpinejs" in low_html or "x-data=" in low_html:
+        add_unique(libraries, "Alpine.js")
+    if "htmx.org" in low_html or "hx-get=" in low_html or "hx-post=" in low_html:
+        add_unique(libraries, "htmx")
+    if "fontawesome" in low_html or re.search(r'class="[^"]*\bfa-(?:solid|regular|brands|light)\b', combined_html):
+        add_unique(libraries, "Font Awesome")
+    if "lucide" in low_html or "feather-icon" in low_html:
+        add_unique(libraries, "Icon Pack (SVG/Lucide)")
+    if "/@vite/" in low_html or "vite" in low_html:
+        add_unique(libraries, "Vite")
+
+    # Servidor / CDN / Infraestrutura
+    if cdn and cdn != "Direto / Não identificado":
+        add_unique(platforms, cdn)
+    if server and server != "Não informado":
+        add_unique(platforms, server)
+    if powered_by:
+        add_unique(platforms, powered_by)
+
+    return {
+        "languages": languages,
+        "frameworks": frameworks,
+        "libraries": libraries,
+        "platforms": platforms,
+        "note": "Detecção indicativa por assinaturas públicas (cabeçalhos HTTP, HTML e DOM); sites podem ocultar ou ofuscar tecnologias.",
+    }
+
 def _build_result(raw_info: dict, rendered: dict, broken_links: list, checked_links: int) -> dict:
 
 
@@ -20278,6 +20395,7 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list, checked_li
 
 
 
+    result["tech_stack"] = detect_tech_stack(raw_info, rendered)
     result["synthesis"] = _build_incapacitation_synthesis(
 
 
@@ -23050,7 +23168,7 @@ def _build_incapacitation_synthesis(url: str, score: int, issues: list[dict], me
 
 
 
-            "area": "Conteúdo Misto / Formul?rios Inseguros",
+            "area": "Conteúdo Misto / Formulários Inseguros",
 
 
 
@@ -23068,7 +23186,7 @@ def _build_incapacitation_synthesis(url: str, score: int, issues: list[dict], me
 
 
 
-            "impact": "Formul?rios apontando para HTTP ou recursos mistos podem ser bloqueados pelo navegador e expor dados trafegados.",
+            "impact": "Formulários apontando para HTTP ou recursos mistos podem ser bloqueados pelo navegador e expor dados trafegados.",
 
 
 
@@ -23536,7 +23654,7 @@ def _build_incapacitation_synthesis(url: str, score: int, issues: list[dict], me
 
 
 
-            f"Priorize primeiro os itens de severidade CRÍTICO/ALTO para evitar bloqueios de acesso, perda de usu?rios ou falhas funcionais."
+            f"Priorize primeiro os itens de severidade CRÍTICO/ALTO para evitar bloqueios de acesso, perda de usuários ou falhas funcionais."
 
 
 
@@ -24274,7 +24392,7 @@ def service_owasp_headers_audit(headers: dict) -> dict:
 
 
 
-         "Restringe acesso a c?mera, microfone, geolocalização e APIs sens?veis do navegador."),
+         "Restringe acesso a câmera, microfone, geolocalização e APIs sensíveis do navegador."),
 
 
 
@@ -24814,7 +24932,7 @@ def service_owasp_headers_audit(headers: dict) -> dict:
 
 
 
-            "fix": "Defina políticas claras de Cache-Control (ex.: public, max-age=... para estáticos ou no-store para dados sens?veis).",
+            "fix": "Defina políticas claras de Cache-Control (ex.: public, max-age=... para estáticos ou no-store para dados sensíveis).",
 
 
 
@@ -25444,7 +25562,7 @@ def service_cookie_security_audit(set_cookies: list[str], is_https: bool) -> dic
 
 
 
-                "explanation": "Cookies com prefixo __Host- exigem Secure, Path=/ e aus?ncia de atributo Domain para evitar escopo indevido.",
+                "explanation": "Cookies com prefixo __Host- exigem Secure, Path=/ e ausência de atributo Domain para evitar escopo indevido.",
 
 
 
@@ -26056,7 +26174,7 @@ def service_a11y_keyboard_audit(html: str) -> dict:
 
 
 
-            "explanation": "Valores de tabindex maiores que 0 for?am saltos imprevis?veis na navegação por Tab para usu?rios de teclado e leitores de tela.",
+            "explanation": "Valores de tabindex maiores que 0 for?am saltos imprevis?veis na navegação por Tab para usuários de teclado e leitores de tela.",
 
 
 
@@ -26704,7 +26822,7 @@ def service_a11y_keyboard_audit(html: str) -> dict:
 
 
 
-            "explanation": "Landmarks estruturais ajudam usu?rios de leitores de tela a navegar rapidamente entre topo, conteúdo principal e rodap?.",
+            "explanation": "Landmarks estruturais ajudam usuários de leitores de tela a navegar rapidamente entre topo, conteúdo principal e rodapé.",
 
 
 
@@ -27388,7 +27506,7 @@ def service_network_resilience_audit(raw_info: dict, rendered: dict) -> dict:
 
 
 
-            "title": "M?ltiplas falhas simult?neas em requisições da página",
+            "title": "Múltiplas falhas simultâneas em requisições da página",
 
 
 
@@ -27442,7 +27560,7 @@ def service_network_resilience_audit(raw_info: dict, rendered: dict) -> dict:
 
 
 
-            "explanation": "V?rias chamadas falharam durante o carregamento, elevando o risco de telas incompletas ou componentes quebrados.",
+            "explanation": "Várias chamadas falharam durante o carregamento, elevando o risco de telas incompletas ou componentes quebrados.",
 
 
 
@@ -27460,7 +27578,7 @@ def service_network_resilience_audit(raw_info: dict, rendered: dict) -> dict:
 
 
 
-            "fix": "Audite falhas de rede, timeouts, bloqueios CORS e endpoints indispon?veis.",
+            "fix": "Audite falhas de rede, timeouts, bloqueios CORS e endpoints indisponíveis.",
 
 
 
@@ -28306,7 +28424,7 @@ def service_exposed_surface_audit(base_url: str, raw_html: str) -> dict:
 
 
 
-                "fix": "Revise /robots.txt para não bloquear rotas públicas importantes sem inten??o.",
+                "fix": "Revise /robots.txt para não bloquear rotas públicas importantes sem intenção.",
 
 
 
@@ -28576,7 +28694,7 @@ def service_exposed_surface_audit(base_url: str, raw_html: str) -> dict:
 
 
 
-            "explanation": "A aus?ncia de security.txt dificulta que pesquisadores ou equipes encontrem um canal oficial de reporte de vulnerabilidades.",
+            "explanation": "A ausência de security.txt dificulta que pesquisadores ou equipes encontrem um canal oficial de reporte de vulnerabilidades.",
 
 
 
@@ -30898,7 +31016,7 @@ def _build_incapacitation_synthesis(url: str, score: int, issues: list[dict], me
 
 
 
-            "area": "Conteúdo Misto (Mixed Content) / Formul?rios HTTP",
+            "area": "Conteúdo Misto (Mixed Content) / Formulários HTTP",
 
 
 
@@ -31168,7 +31286,7 @@ def _build_incapacitation_synthesis(url: str, score: int, issues: list[dict], me
 
 
 
-        verdict = "CRÍTICO ? Risco Alto de Incapacitação ou Degradação Grave"
+        verdict = "CRÍTICO — Risco Alto de Incapacitação ou Degradação Grave"
 
 
 

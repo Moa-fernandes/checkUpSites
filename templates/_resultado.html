@@ -110,36 +110,82 @@
         </button>
       </div>
 
-      <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+      <div id="bloco-ssl-card" class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <p class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Certificado SSL / TLS</p>
+          <p id="ssl-card-title" class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Certificado SSL / TLS</p>
           {% if not m.is_https %}
-            <span class="rounded-md bg-red-100 px-2.5 py-0.5 font-mono text-xs font-bold text-red-900">SEM HTTPS</span>
+            <span id="ssl-status-badge" data-ssl-state="no_https" class="rounded-md bg-red-100 px-2.5 py-0.5 font-mono text-xs font-bold text-red-900">SEM HTTPS</span>
           {% elif m.ssl_valid %}
-            <span class="rounded-md bg-emerald-100 px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-900">VÁLIDO</span>
+            <span id="ssl-status-badge" data-ssl-state="valid" class="rounded-md bg-emerald-100 px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-900">VÁLIDO</span>
           {% elif m.ssl_days_left is not none %}
-            <span class="rounded-md bg-red-100 px-2.5 py-0.5 font-mono text-xs font-bold text-red-900">INVÁLIDO / EXPIRADO</span>
+            <span id="ssl-status-badge" data-ssl-state="invalid" class="rounded-md bg-red-100 px-2.5 py-0.5 font-mono text-xs font-bold text-red-900">INVÁLIDO / EXPIRADO</span>
           {% else %}
-            <span class="rounded-md bg-amber-100 px-2.5 py-0.5 font-mono text-xs font-bold text-amber-950">NÃO VERIFICADO</span>
+            <span id="ssl-status-badge" data-ssl-state="unchecked" class="rounded-md bg-amber-100 px-2.5 py-0.5 font-mono text-xs font-bold text-amber-950">NÃO VERIFICADO</span>
           {% endif %}
         </div>
 
         <div class="mt-2.5 grid gap-2 text-xs text-slate-700 sm:grid-cols-3 font-mono">
           <div>
-            <span class="text-slate-500">Validade:</span>
-            <strong class="text-slate-900">
+            <span id="ssl-label-validity" class="text-slate-500">Validade:</span>
+            <strong id="ssl-val-days" data-ssl-days="{{ m.ssl_days_left if m.ssl_days_left is not none else '' }}" class="text-slate-900">
               {% if m.ssl_days_left is not none %}{{ m.ssl_days_left }} dia(s){% else %}N/D{% endif %}
             </strong>
           </div>
           <div>
-            <span class="text-slate-500">Expira em:</span>
-            <strong class="text-slate-900">{{ m.ssl_expires_at or "N/D" }}</strong>
+            <span id="ssl-label-expires" class="text-slate-500">Expira em:</span>
+            <strong id="ssl-val-expires" class="text-slate-900">{{ m.ssl_expires_at or "N/D" }}</strong>
           </div>
           <div>
-            <span class="text-slate-500">Protocolo / Emissor:</span>
-            <strong class="text-slate-900">{{ m.tls_version or "TLS N/D" }}{% if m.ssl_issuer %} · {{ m.ssl_issuer }}{% endif %}</strong>
+            <span id="ssl-label-issuer" class="text-slate-500">Protocolo / Emissor:</span>
+            <strong id="ssl-val-issuer" class="text-slate-900">{{ m.tls_version or "TLS N/D" }}{% if m.ssl_issuer %} · {{ m.ssl_issuer }}{% endif %}</strong>
           </div>
         </div>
+      </div>
+
+      {% set ts = result.get("tech_stack") or {} %}
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p id="stack-card-title" class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Linguagens, Frameworks e Bibliotecas</p>
+          <span id="stack-card-badge" class="font-mono text-[10px] text-slate-500">assinaturas públicas</span>
+        </div>
+
+        <div class="mt-2.5 grid gap-2.5 text-xs text-slate-700 sm:grid-cols-2">
+          <div>
+            <span id="stack-lbl-lang" class="font-semibold text-slate-500">Linguagens:</span>
+            {% if ts.get("languages") %}
+              <strong class="text-slate-900">{{ ts.get("languages") | join(", ") }}</strong>
+            {% else %}
+              <span class="js-not-identified text-slate-500">Não identificado</span>
+            {% endif %}
+          </div>
+          <div>
+            <span id="stack-lbl-fw" class="font-semibold text-slate-500">Frameworks / CMS:</span>
+            {% if ts.get("frameworks") %}
+              <strong class="text-slate-900">{{ ts.get("frameworks") | join(", ") }}</strong>
+            {% else %}
+              <span class="js-not-identified text-slate-500">Não identificado</span>
+            {% endif %}
+          </div>
+          <div>
+            <span id="stack-lbl-lib" class="font-semibold text-slate-500">Bibliotecas / UI:</span>
+            {% if ts.get("libraries") %}
+              <strong class="text-slate-900">{{ ts.get("libraries") | join(", ") }}</strong>
+            {% else %}
+              <span class="js-not-identified text-slate-500">Não identificado</span>
+            {% endif %}
+          </div>
+          <div>
+            <span id="stack-lbl-plat" class="font-semibold text-slate-500">Servidor / CDN:</span>
+            {% if ts.get("platforms") %}
+              <strong class="text-slate-900">{{ ts.get("platforms") | join(" · ") }}</strong>
+            {% else %}
+              <span class="js-not-identified text-slate-500">Não identificado</span>
+            {% endif %}
+          </div>
+        </div>
+        {% if ts.get("note") %}
+          <p id="stack-card-note" class="mt-2 text-[11px] text-slate-500">{{ ts.get("note") }}</p>
+        {% endif %}
       </div>
     </div>
   </div>
@@ -148,8 +194,8 @@
   <div id="secao-corrigir" class="pt-2">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div>
-        <h3 data-i18n="what_to_fix" class="text-xl font-extrabold tracking-tight text-slate-900">O que corrigir</h3>
-        <p id="filtro-ativo-label" class="mt-0.5 text-xs font-semibold text-indigo-700">
+        <h3 id="what-to-fix-heading" data-i18n="what_to_fix" class="text-xl font-extrabold tracking-tight text-slate-900">O que corrigir</h3>
+        <p id="filtro-ativo-label" data-total-issues="{{ result.total_issues }}" class="mt-0.5 text-xs font-semibold text-indigo-700">
           Exibindo todos os {{ result.total_issues }} apontamentos
         </p>
       </div>
@@ -232,54 +278,70 @@
 </section>
 
 <article id="relatorio-tecnico-pdf" class="print-only hidden text-slate-900">
-  <header class="pdf-card-block" style="border-bottom: 2px solid #0f172a;">
-    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+  <header class="pdf-card-block pdf-header-box" style="border-bottom: 2px solid #0f172a; background: #f8fafc;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;">
       <div>
-        <p style="font-size: 9pt; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #334155; margin: 0;">
+        <p style="font-size: 8.5pt; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: #3730a3; margin: 0;">
           checkUp — Laudo Técnico de Auditoria Web
         </p>
-        <h1 style="font-size: 15pt; font-weight: 800; margin: 2px 0 0 0; color: #0f172a;">
+        <h1 style="font-size: 14pt; font-weight: 800; margin: 2px 0 0 0; color: #0f172a;">
           Relatório Técnico de Infraestrutura, Acessibilidade e Qualidade
         </h1>
       </div>
-      <div style="text-align: right; font-family: monospace; font-size: 9pt;">
-        <strong>Nota Geral: {{ result.score }}/100</strong><br>
+      <div style="text-align: right; font-family: monospace; font-size: 9pt; white-space: nowrap; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 6px; padding: 6px 10px;">
+        <strong style="font-size: 10.5pt;">Nota Geral: {{ result.score }}/100</strong><br>
         <span>Total de apontamentos: {{ result.total_issues }}</span>
       </div>
     </div>
-    <p style="font-family: monospace; font-size: 8.5pt; margin: 8px 0 0 0; color: #1e293b; word-break: break-all;">
+
+    <p style="font-family: monospace; font-size: 8.5pt; margin: 8px 0 6px 0; color: #0f172a; word-break: break-all;">
       <strong>URL Auditada:</strong> {{ result.url }}
     </p>
-    <p style="font-family: monospace; font-size: 8.5pt; margin: 6px 0 0 0; color: #0f172a;">
-      <strong>Certificado SSL / TLS:</strong>
-      {% if not m.is_https %}Sem HTTPS{% elif m.ssl_valid %}Válido{% elif m.ssl_days_left is not none %}Inválido / Expirado{% else %}Não verificado{% endif %}
-      · <strong>Validade:</strong> {% if m.ssl_days_left is not none %}{{ m.ssl_days_left }} dia(s){% else %}N/D{% endif %}
-      · <strong>Expira em:</strong> {{ m.ssl_expires_at or "N/D" }}
-      · <strong>Protocolo / Emissor:</strong> {{ m.tls_version or "TLS N/D" }}{% if m.ssl_issuer %} · {{ m.ssl_issuer }}{% endif %}
-    </p>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-family: monospace; font-size: 8pt; border-top: 1px solid #cbd5e1; padding-top: 6px;">
+      <div>
+        <strong>Certificado SSL / TLS:</strong>
+        {% if not m.is_https %}Sem HTTPS{% elif m.ssl_valid %}Válido{% elif m.ssl_days_left is not none %}Inválido / Expirado{% else %}Não verificado{% endif %}
+        · <strong>Validade:</strong> {% if m.ssl_days_left is not none %}{{ m.ssl_days_left }} dia(s){% else %}N/D{% endif %}
+        · <strong>Expira em:</strong> {{ m.ssl_expires_at or "N/D" }}
+        · <strong>Protocolo / Emissor:</strong> {{ m.tls_version or "TLS N/D" }}{% if m.ssl_issuer %} · {{ m.ssl_issuer }}{% endif %}
+      </div>
+      <div>
+        {% set ts_pdf = result.get("tech_stack") or {} %}
+        <strong>Stack detectada:</strong>
+        <span>Linguagens:</span> {{ (ts_pdf.get("languages") | join(", ")) if ts_pdf.get("languages") else "N/D" }}
+        · <span>Frameworks:</span> {{ (ts_pdf.get("frameworks") | join(", ")) if ts_pdf.get("frameworks") else "N/D" }}
+        · <span>Bibliotecas:</span> {{ (ts_pdf.get("libraries") | join(", ")) if ts_pdf.get("libraries") else "N/D" }}
+      </div>
+    </div>
+
+    <div style="margin-top: 6px; padding-top: 6px; border-top: 1px dashed #cbd5e1; font-family: monospace; font-size: 8pt; color: #334155;">
+      <strong>Resumo de Prioridades:</strong>
+      Alta: {{ m.high_count }} · Média: {{ m.medium_count }} · Baixa: {{ m.low_count }} · Tempo resposta: {{ m.ttfb_ms }} ms
+    </div>
   </header>
 
   {% if result.issues %}
   <section class="pdf-card-block">
-    <h2 style="font-size: 11pt; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin: 0 0 10px 0;">
+    <h2 style="font-size: 10.5pt; font-weight: 800; text-transform: uppercase; border-bottom: 1px solid #cbd5e1; padding-bottom: 4px; margin: 0 0 8px 0;">
       Não Conformidades Identificadas por Ordem de Prioridade
     </h2>
     {% set ns = namespace(idx=0) %}
     {% for priority_key, priority_label in [('alta', 'PRIORIDADE ALTA (CRÍTICO)'), ('media', 'PRIORIDADE MÉDIA (MODERADO)'), ('baixa', 'PRIORIDADE BAIXA (MELHORIA)')] %}
       {% set group_issues = result.issues | selectattr('level', 'equalto', priority_key) | list %}
       {% if group_issues %}
-        <h3 class="print-avoid-break" style="font-size: 9.5pt; font-weight: 800; margin: 12px 0 6px 0; padding: 4px 8px; background: #f1f5f9; border-left: 3px solid #0f172a;">
+        <h3 class="print-avoid-break" style="font-size: 9pt; font-weight: 800; margin: 10px 0 5px 0; padding: 4px 8px; background: #f1f5f9; border-left: 3px solid #0f172a;">
           {{ priority_label }} — {{ group_issues|length }} item(ns)
         </h3>
         {% for issue in group_issues %}
           {% set ns.idx = ns.idx + 1 %}
-          <div class="print-avoid-break" style="border-bottom: 1px solid #e2e8f0; padding: 7px 2px 9px 2px; margin-bottom: 6px;">
-            <p style="margin: 0; font-size: 9.5pt; font-weight: 700;">
+          <div class="pdf-issue-item">
+            <p style="margin: 0; font-size: 9pt; font-weight: 700;">
               {{ "%02d"|format(ns.idx) }}. [{{ issue.level|upper }}] [{{ issue.category }}] {{ issue.title }}
-              <span style="font-family: monospace; font-weight: 600; font-size: 8.5pt; color: #334155;">({{ issue.count }} ocorrência(s))</span>
+              <span style="font-family: monospace; font-weight: 600; font-size: 8pt; color: #334155;">({{ issue.count }} ocorrência(s))</span>
             </p>
-            <p style="margin: 4px 0 0 0; font-size: 9pt; color: #1e293b;"><strong>Diagnóstico:</strong> {{ issue.explanation }}</p>
-            <p style="margin: 3px 0 0 0; font-size: 9pt; color: #0f172a;"><strong>Ação corretiva:</strong> {{ issue.fix }}</p>
+            <p style="margin: 3px 0 0 0; font-size: 8.5pt; color: #1e293b;"><strong>Diagnóstico:</strong> {{ issue.explanation }}</p>
+            <p style="margin: 2px 0 0 0; font-size: 8.5pt; color: #0f172a;"><strong>Ação corretiva:</strong> {{ issue.fix }}</p>
           </div>
         {% endfor %}
       {% endif %}
@@ -289,13 +351,13 @@
 
   {% if result.synthesis %}
   <section class="pdf-card-block" style="background: #f8fafc;">
-    <h2 data-i18n="general_summary_title" style="font-size: 11pt; font-weight: 800; text-transform: uppercase; margin: 0 0 8px 0; color: #0f172a;">
+    <h2 class="print-avoid-break" data-i18n="general_summary_title" style="font-size: 10.5pt; font-weight: 800; text-transform: uppercase; margin: 0 0 6px 0; color: #0f172a;">
       Resumo Geral Técnico — Riscos e Fatores que Podem Incapacitar ou Comprometer o Site
     </h2>
-    <p style="margin: 0 0 6px 0; font-family: monospace; font-size: 8.5pt;">
+    <p class="print-avoid-break" style="margin: 0 0 5px 0; font-family: monospace; font-size: 8.5pt;">
       <strong>Diagnóstico Consolidado:</strong> {{ result.synthesis.verdict }} ({{ result.synthesis.total_incapacitating_factors }} fator(es) crítico(s)/relevante(s))
     </p>
-    <p style="margin: 0 0 8px 0; font-size: 9pt; color: #1e293b;">{{ result.synthesis.summary }}</p>
+    <p class="print-avoid-break" style="margin: 0 0 8px 0; font-size: 8.5pt; color: #1e293b;">{{ result.synthesis.summary }}</p>
     {% if result.synthesis.factors %}
       {% for f in result.synthesis.factors %}
         <div class="pdf-factor-row">
@@ -307,13 +369,13 @@
   </section>
   {% endif %}
 
-  <footer style="margin-top: 12px; border-top: 1px solid #cbd5e1; padding-top: 6px; font-family: monospace; font-size: 8pt; color: #475569;">
+  <footer class="print-avoid-break" style="margin-top: 8px; border-top: 1px solid #cbd5e1; padding-top: 5px; font-family: monospace; font-size: 7.5pt; color: #475569;">
     Documento técnico gerado automaticamente pelo checkUp. Recomenda-se validação complementar com leitores de tela e revisão humana.
   </footer>
 </article>
 
 <script id="dados-relatorio" type="application/json">
-  {{ {"url": result.url, "score": result.score, "total_issues": result.total_issues, "metrics": result.metrics, "deep_audit": result.get("deep_audit"), "diagnostic_services": result.get("diagnostic_services"), "synthesis": result.get("synthesis"), "comparison": comparison, "issues": result.issues} | tojson }}
+  {{ {"url": result.url, "score": result.score, "total_issues": result.total_issues, "metrics": result.metrics, "tech_stack": result.get("tech_stack"), "deep_audit": result.get("deep_audit"), "diagnostic_services": result.get("diagnostic_services"), "synthesis": result.get("synthesis"), "comparison": comparison, "issues": result.issues} | tojson }}
 </script>
 {% endif %}
 
@@ -332,3 +394,107 @@
     window.checkupSyncPdfLangBox((window.__checkupLang || 'pt'));
   }
 </script>
+
+<script>
+(function () {
+  function resolveReportLang(explicitLang) {
+    const raw = (explicitLang || window.__checkupLang || localStorage.getItem('checkup_lang') || document.documentElement.lang || 'pt').toLowerCase();
+    return raw.startsWith('en') ? 'en' : 'pt';
+  }
+
+  function applyReportLang(explicitLang) {
+    const lang = resolveReportLang(explicitLang);
+    const isEn = lang === 'en';
+
+    const fixHeading = document.getElementById('what-to-fix-heading');
+    if (fixHeading) fixHeading.textContent = isEn ? 'What to fix' : 'O que corrigir';
+
+    const filterLabel = document.getElementById('filtro-ativo-label');
+    if (filterLabel) {
+      const total = filterLabel.getAttribute('data-total-issues') || '0';
+      if (/Exibindo todos os|Showing all/i.test(filterLabel.textContent || '')) {
+        filterLabel.textContent = isEn
+          ? ('Showing all ' + total + ' findings')
+          : ('Exibindo todos os ' + total + ' apontamentos');
+      }
+    }
+
+    const sslTitle = document.getElementById('ssl-card-title');
+    if (sslTitle) sslTitle.textContent = isEn ? 'SSL / TLS Certificate' : 'Certificado SSL / TLS';
+
+    const sslBadge = document.getElementById('ssl-status-badge');
+    if (sslBadge) {
+      const st = sslBadge.getAttribute('data-ssl-state');
+      const mapEn = {
+        no_https: 'NO HTTPS',
+        valid: 'VALID',
+        invalid: 'INVALID / EXPIRED',
+        unchecked: 'UNVERIFIED'
+      };
+      const mapPt = {
+        no_https: 'SEM HTTPS',
+        valid: 'VÁLIDO',
+        invalid: 'INVÁLIDO / EXPIRADO',
+        unchecked: 'NÃO VERIFICADO'
+      };
+      if (st && (isEn ? mapEn[st] : mapPt[st])) {
+        sslBadge.textContent = isEn ? mapEn[st] : mapPt[st];
+      }
+    }
+
+    const lVal = document.getElementById('ssl-label-validity');
+    if (lVal) lVal.textContent = isEn ? 'Validity:' : 'Validade:';
+    const vDays = document.getElementById('ssl-val-days');
+    if (vDays) {
+      const rawDays = vDays.getAttribute('data-ssl-days');
+      if (rawDays !== null && rawDays !== '') {
+        const n = parseInt(rawDays, 10);
+        vDays.textContent = isEn ? (n + ' day(s)') : (n + ' dia(s)');
+      } else {
+        vDays.textContent = isEn ? 'N/A' : 'N/D';
+      }
+    }
+
+    const lExp = document.getElementById('ssl-label-expires');
+    if (lExp) lExp.textContent = isEn ? 'Expires on:' : 'Expira em:';
+    const vExp = document.getElementById('ssl-val-expires');
+    if (vExp && (vExp.textContent === 'N/D' || vExp.textContent === 'N/A')) {
+      vExp.textContent = isEn ? 'N/A' : 'N/D';
+    }
+
+    const lIss = document.getElementById('ssl-label-issuer');
+    if (lIss) lIss.textContent = isEn ? 'Protocol / Issuer:' : 'Protocolo / Emissor:';
+
+    const stackTitle = document.getElementById('stack-card-title');
+    if (stackTitle) stackTitle.textContent = isEn ? 'Languages, Frameworks & Libraries' : 'Linguagens, Frameworks e Bibliotecas';
+    const stackSub = document.getElementById('stack-card-badge');
+    if (stackSub) stackSub.textContent = isEn ? 'public signatures' : 'assinaturas públicas';
+
+    const stackLabels = {
+      'stack-lbl-lang': isEn ? 'Languages:' : 'Linguagens:',
+      'stack-lbl-fw': isEn ? 'Frameworks / CMS:' : 'Frameworks / CMS:',
+      'stack-lbl-lib': isEn ? 'Libraries / UI:' : 'Bibliotecas / UI:',
+      'stack-lbl-plat': isEn ? 'Server / CDN:' : 'Servidor / CDN:'
+    };
+    Object.keys(stackLabels).forEach(function (id) {
+      const el = document.getElementById(id);
+      if (el) el.textContent = stackLabels[id];
+    });
+
+    document.querySelectorAll('.js-not-identified').forEach(function (el) {
+      el.textContent = isEn ? 'Not detected' : 'Não identificado';
+    });
+
+    const stackNote = document.getElementById('stack-card-note');
+    if (stackNote) {
+      stackNote.textContent = isEn
+        ? 'Indicative detection based on public signatures (HTTP headers, HTML, and DOM); sites may hide or obfuscate technologies.'
+        : 'Detecção indicativa por assinaturas públicas (cabeçalhos HTTP, HTML e DOM); sites podem ocultar ou ofuscar tecnologias.';
+    }
+  }
+
+  window.checkupTranslateReport = applyReportLang;
+  applyReportLang();
+})();
+</script>
+<script>if (typeof window.applyFullReportTranslation === 'function') { window.applyFullReportTranslation(); }</script>

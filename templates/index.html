@@ -345,9 +345,12 @@
         });
         const activeLabel = document.getElementById('filtro-ativo-label');
         if (activeLabel) {
+          const isEn = getLang() === 'en';
+          const catMapEn = { 'Infraestrutura': 'Infrastructure', 'Acessibilidade': 'Accessibility', 'Qualidade': 'Quality' };
+          const catLabel = isEn ? (catMapEn[filter] || filter) : filter;
           activeLabel.textContent = filter === 'all'
-            ? 'Exibindo todos os ' + visible + ' apontamentos'
-            : 'Filtro por categoria: ' + filter + ' (' + visible + ' item(ns))';
+            ? (isEn ? ('Showing all ' + visible + ' findings') : ('Exibindo todos os ' + visible + ' apontamentos'))
+            : (isEn ? ('Category filter: ' + catLabel + ' (' + visible + ' item(s))') : ('Filtro por categoria: ' + catLabel + ' (' + visible + ' item(ns))'));
         }
         if (emptyMsg) emptyMsg.classList.toggle('hidden', visible > 0);
       };
@@ -365,7 +368,13 @@
         });
         const activeLabel = document.getElementById('filtro-ativo-label');
         if (activeLabel) {
-          activeLabel.textContent = 'Filtrado por ' + (levelNames[targetLevel] || targetLevel) + ': ' + visible + ' item(ns) a corrigir';
+          const isEn = getLang() === 'en';
+          const namesPt = { alta: 'Prioridade alta', media: 'Prioridade média', baixa: 'Prioridade baixa' };
+          const namesEn = { alta: 'High priority', media: 'Medium priority', baixa: 'Low priority' };
+          const lbl = isEn ? (namesEn[targetLevel] || targetLevel) : (namesPt[targetLevel] || targetLevel);
+          activeLabel.textContent = isEn
+            ? ('Filtered by ' + lbl + ': ' + visible + ' item(s) to fix')
+            : ('Filtrado por ' + lbl + ': ' + visible + ' item(ns) a corrigir');
         }
         if (emptyMsg) emptyMsg.classList.toggle('hidden', visible > 0);
         const sec = document.getElementById('secao-corrigir');
@@ -375,8 +384,13 @@
 
     const rawDataEl = document.getElementById('dados-relatorio');
     const doExportJson = function (recipientEmail) {
-      if (!rawDataEl) return;
-      const payload = JSON.parse(rawDataEl.textContent);
+      const currentRawEl = document.getElementById('dados-relatorio') || rawDataEl;
+      if (!currentRawEl) return;
+      const lang = getLang();
+      const payload = (lang === 'en' && typeof window.getTranslatedReportPayload === 'function')
+        ? window.getTranslatedReportPayload(recipientEmail || '', lang)
+        : JSON.parse(currentRawEl.textContent);
+      payload.language = lang;
       payload.delivery = { method: 'email_and_download', recipient_email: recipientEmail || '', amount_brl: 5.99 };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const blobUrl = URL.createObjectURL(blob);
@@ -392,7 +406,12 @@
     document.querySelectorAll('.js-export-json, #btn-export-json').forEach(function (elBtn) {
       elBtn.onclick = function () {
         if (typeof window.requestPaidReportAction === 'function') {
-          window.requestPaidReportAction(function (addr) { doExportJson(addr); });
+          window.requestPaidReportAction(function (addr, chosenLang) {
+            const prevLang = window.__checkupLang;
+            if (chosenLang) window.__checkupLang = chosenLang;
+            doExportJson(addr);
+            window.__checkupLang = prevLang;
+          });
         } else {
           doExportJson('');
         }
@@ -401,10 +420,27 @@
 
     document.querySelectorAll('.js-print-report, #btn-print-report').forEach(function (elBtn) {
       elBtn.onclick = function () {
+        const triggerPrintInLang = function (reportLang) {
+          const uiLang = getLang();
+          const targetLang = reportLang === 'en' ? 'en' : 'pt';
+          if (typeof window.applyFullReportTranslation === 'function') {
+            window.applyFullReportTranslation(targetLang);
+          }
+          const restoreUi = function () {
+            window.removeEventListener('afterprint', restoreUi);
+            if (typeof window.applyFullReportTranslation === 'function') {
+              window.applyFullReportTranslation(uiLang);
+            }
+          };
+          window.addEventListener('afterprint', restoreUi);
+          setTimeout(function () { window.print(); }, 60);
+        };
         if (typeof window.requestPaidReportAction === 'function') {
-          window.requestPaidReportAction(function () { window.print(); });
+          window.requestPaidReportAction(function (_addr, chosenLang) {
+            triggerPrintInLang(chosenLang || getLang());
+          });
         } else {
-          window.print();
+          triggerPrintInLang(getLang());
         }
       };
     });
@@ -474,6 +510,12 @@
             if (resultContainer) {
               resultContainer.innerHTML = msg.html || '';
               bindReportEvents();
+              if (typeof window.checkupSyncPdfLangBox === 'function') {
+                window.checkupSyncPdfLangBox(getLang());
+              }
+              if (typeof window.applyFullReportTranslation === 'function') {
+                window.applyFullReportTranslation(getLang());
+              }
             }
             closeOverlay(true);
             return;
