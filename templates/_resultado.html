@@ -109,6 +109,38 @@
           <p class="mt-0.5 font-mono text-[10px] font-bold text-indigo-700">Ver lista →</p>
         </button>
       </div>
+
+      <div class="rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <p class="text-xs font-extrabold uppercase tracking-wider text-slate-700">Certificado SSL / TLS</p>
+          {% if not m.is_https %}
+            <span class="rounded-md bg-red-100 px-2.5 py-0.5 font-mono text-xs font-bold text-red-900">SEM HTTPS</span>
+          {% elif m.ssl_valid %}
+            <span class="rounded-md bg-emerald-100 px-2.5 py-0.5 font-mono text-xs font-bold text-emerald-900">VÁLIDO</span>
+          {% elif m.ssl_days_left is not none %}
+            <span class="rounded-md bg-red-100 px-2.5 py-0.5 font-mono text-xs font-bold text-red-900">INVÁLIDO / EXPIRADO</span>
+          {% else %}
+            <span class="rounded-md bg-amber-100 px-2.5 py-0.5 font-mono text-xs font-bold text-amber-950">NÃO VERIFICADO</span>
+          {% endif %}
+        </div>
+
+        <div class="mt-2.5 grid gap-2 text-xs text-slate-700 sm:grid-cols-3 font-mono">
+          <div>
+            <span class="text-slate-500">Validade:</span>
+            <strong class="text-slate-900">
+              {% if m.ssl_days_left is not none %}{{ m.ssl_days_left }} dia(s){% else %}N/D{% endif %}
+            </strong>
+          </div>
+          <div>
+            <span class="text-slate-500">Expira em:</span>
+            <strong class="text-slate-900">{{ m.ssl_expires_at or "N/D" }}</strong>
+          </div>
+          <div>
+            <span class="text-slate-500">Protocolo / Emissor:</span>
+            <strong class="text-slate-900">{{ m.tls_version or "TLS N/D" }}{% if m.ssl_issuer %} · {{ m.ssl_issuer }}{% endif %}</strong>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -217,6 +249,13 @@
     </div>
     <p style="font-family: monospace; font-size: 8.5pt; margin: 8px 0 0 0; color: #1e293b; word-break: break-all;">
       <strong>URL Auditada:</strong> {{ result.url }}
+    </p>
+    <p style="font-family: monospace; font-size: 8.5pt; margin: 6px 0 0 0; color: #0f172a;">
+      <strong>Certificado SSL / TLS:</strong>
+      {% if not m.is_https %}Sem HTTPS{% elif m.ssl_valid %}Válido{% elif m.ssl_days_left is not none %}Inválido / Expirado{% else %}Não verificado{% endif %}
+      · <strong>Validade:</strong> {% if m.ssl_days_left is not none %}{{ m.ssl_days_left }} dia(s){% else %}N/D{% endif %}
+      · <strong>Expira em:</strong> {{ m.ssl_expires_at or "N/D" }}
+      · <strong>Protocolo / Emissor:</strong> {{ m.tls_version or "TLS N/D" }}{% if m.ssl_issuer %} · {{ m.ssl_issuer }}{% endif %}
     </p>
   </header>
 
