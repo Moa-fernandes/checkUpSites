@@ -27,6 +27,7 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
     surface_audit = raw_info.get("surface_audit") or audit_exposed_surface(
         raw_info["final_url"], raw_info.get("html") or ""
     )
+    raw_info["surface_audit"] = surface_audit
 
     extra = (
         audit_infrastructure(raw_info)
@@ -83,6 +84,8 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
         "robots_present": surface_audit.get("robots_present", False),
         "robots_disallows_all": surface_audit.get("robots_disallows_all", False),
         "security_txt_present": surface_audit.get("security_txt_present", False),
+        "sitemap_present": surface_audit.get("sitemap_present", False),
+        "manifest_present": surface_audit.get("manifest_present", False),
         "resolved_host": urlparse(raw_info["final_url"]).hostname,
         "server_header": raw_info.get("server", "Não informado"),
         "cdn_detected": raw_info.get("cdn", "Direto"),
@@ -100,20 +103,20 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
 
 
 def check_site_steps(raw_url: str):
-    """Executa diagnóstico aprofundado e emite eventos de progresso reais sem atrasos artificiais."""
+    """Executa diagnóstico aprofundado e emite eventos de progresso reais."""
     yield {"type": "progress", "percent": 10, "step": "Validando endereço, DNS e regras anti-SSRF..."}
     url = normalize_url(raw_url)
 
-    yield {"type": "progress", "percent": 28, "step": "Consultando resposta HTTP, TLS/SSL, servidor, CDN e cabeçalhos..."}
+    yield {"type": "progress", "percent": 26, "step": "Consultando resposta HTTP, TLS/SSL, servidor, CDN e cabeçalhos..."}
     raw_info = fetch_raw_page(url)
 
-    yield {"type": "progress", "percent": 48, "step": "Auditando superfície pública (robots.txt, security.txt) e OWASP..."}
+    yield {"type": "progress", "percent": 46, "step": "Auditando superfície pública (robots.txt, security.txt, manifest, bundles) e OWASP..."}
     raw_info["surface_audit"] = audit_exposed_surface(raw_info["final_url"], raw_info.get("html") or "")
 
-    yield {"type": "progress", "percent": 68, "step": "Analisando DOM, semântica ARIA, contraste e recursos..."}
+    yield {"type": "progress", "percent": 68, "step": "Analisando DOM, semântica ARIA, contraste, assinaturas de stack e recursos..."}
     rendered = render_page(raw_info["final_url"], raw_html=raw_info.get("html") or "")
 
-    yield {"type": "progress", "percent": 85, "step": "Verificando links externos/internos e integridade estrutural..."}
+    yield {"type": "progress", "percent": 86, "step": "Verificando links externos/internos e integridade estrutural..."}
     broken_links, checked_links = check_links((rendered.get("quality") or {}).get("links") or [])
 
     yield {"type": "progress", "percent": 95, "step": "Calculando pontuação ponderada por pilar e síntese final..."}

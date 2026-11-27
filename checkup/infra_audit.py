@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import re
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
+
+from bs4 import BeautifulSoup
 
 from .network import get_resolved_ips, safe_probe_url
 
@@ -268,7 +270,7 @@ def _audit_cookies(set_cookies: list[str], is_https: bool) -> list[dict]:
 
 
 def audit_exposed_surface(base_url: str, raw_html: str) -> dict:
-    """Audita DNS em cache, robots.txt, security.txt e indícios de stack traces expostos."""
+    """Audita DNS em cache, robots.txt, security.txt, sitemap/manifest e indícios de stack traces."""
     parsed = urlparse(base_url)
     host = parsed.hostname or ""
     scheme = parsed.scheme or "https"
@@ -314,6 +316,34 @@ def audit_exposed_surface(base_url: str, raw_html: str) -> dict:
             "examples": [f"{origin}/.well-known/security.txt não encontrado"],
         })
 
+    sitemap_present = False
+    r_map = safe_probe_url(f"{origin}/sitemap.xml", timeout_s=3.0) if host else None
+    if r_map is not None and r_map.status_code == 200 and ("<urlset" in (r_map.text or "").lower() or "<sitemapindex" in (r_map.text or "").lower()):
+        sitemap_present = True
+
+    manifest_present = False
+    soup = BeautifulSoup(raw_html or "", "html.parser")
+    manifest_link = soup.find("link", rel=lambda v: v and "manifest" in [x.lower() for x in (v if isinstance(v, list) else [v])])
+    manifest_url = urljoin(origin + "/", manifest_link["href"]) if (manifest_link and manifest_link.get("href")) else f"{origin}/manifest.json"
+    r_man = safe_probe_url(manifest_url, timeout_s=2.5) if host else None
+    if r_man is not None and r_man.status_code == 200 and ("{" in (r_man.text or "")):
+        manifest_present = True
+
+    # Coleta trechos de scripts/estilos externos para enriquecer detecção de stack
+    asset_snippets: list[str] = []
+    asset_urls: list[str] = []
+    for tag_name, attr_name in [("script", "src"), ("link", "href")]:
+        for el in soup.find_all(tag_name):
+            raw_attr = (el.get(attr_name) or "").strip()
+            if not raw_attr or raw_attr.startswith("data:"):
+                continue
+            resolved = urljoin(base_url, raw_attr)
+            asset_urls.append(resolved)
+            if urlparse(resolved).hostname == host and len(asset_snippets) < 4:
+                r_asset = safe_probe_url(resolved, timeout_s=2.5)
+                if r_asset is not None and r_asset.status_code == 200 and r_asset.text:
+                    asset_snippets.append(r_asset.text[:4000])
+
     debug_patterns = ["werkzeug debugger", "traceback (most recent call last)", "stack trace", "sql syntax error"]
     html_low = (raw_html or "").lower()
     exposed_traces = [pat for pat in debug_patterns if pat in html_low]
@@ -336,27 +366,43 @@ def audit_exposed_surface(base_url: str, raw_html: str) -> dict:
         "robots_present": robots_present,
         "robots_disallows_all": robots_disallows_all,
         "security_txt_present": security_txt_present,
+        "sitemap_present": sitemap_present,
+        "manifest_present": manifest_present,
+        "asset_urls": list(dict.fromkeys(asset_urls))[:20],
+        "asset_snippets": asset_snippets,
         "exposed_traces": exposed_traces,
         "issues": issues,
     }
 
 
 def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
-    """Identifica linguagens, frameworks, bibliotecas e plataformas com assinaturas estruturais precisas."""
+    """Identifica linguagens, frameworks, bibliotecas e plataformas com assinaturas públicas amplas."""
     headers = {k.lower(): str(v) for k, v in ((raw_info or {}).get("headers") or {}).items()}
     server = str((raw_info or {}).get("server") or "")
     cdn = str((raw_info or {}).get("cdn") or "")
     powered_by = str((raw_info or {}).get("powered_by") or headers.get("x-powered-by") or "")
     cookies_str = " | ".join((raw_info or {}).get("set_cookies") or [])
+    surface = (raw_info or {}).get("surface_audit") or {}
 
     html_raw = str((raw_info or {}).get("html") or "")
     html_ren = str((rendered or {}).get("html") or "")
-    combined_html = f"{html_raw}\n{html_ren}"
-    low_html = combined_html.lower()
-    low_headers = f"{server} {cdn} {powered_by} {cookies_str} " + " ".join(
-        f"{k}: {v}" for k, v in headers.items()
-    )
-    low_headers = low_headers.lower()
+    asset_urls_str = "\n".join(surface.get("asset_urls") or [])
+    asset_code_str = "\n".join(surface.get("asset_snippets") or [])
+
+    combined_html = f"{html_raw}\n{html_ren}\n{asset_urls_str}"
+    full_scan_blob = f"{combined_html}\n{asset_code_str}"
+    low_html = full_scan_blob.lower()
+
+    soup = BeautifulSoup(html_ren or html_raw or "", "html.parser")
+    generators = " ".join(
+        (m.get("content") or "")
+        for m in soup.find_all("meta", attrs={"name": re.compile(r"^generator$", re.I)})
+    ).lower()
+
+    low_headers = (
+        f"{server} {cdn} {powered_by} {cookies_str} {generators} "
+        + " ".join(f"{k}: {v}" for k, v in headers.items())
+    ).lower()
 
     languages: list[str] = []
     frameworks: list[str] = []
@@ -369,79 +415,90 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
             target.append(label)
             evidence.append(f"{label} ({reason})")
 
-    # Linguagens / Runtimes
-    if "php" in low_headers or "phpsessid" in low_headers or "/wp-content/" in low_html or re.search(r'\.php(?:["\'?]|$)', low_html):
+    def has_rx(pattern: str, text: str = low_html) -> bool:
+        return bool(re.search(pattern, text, re.IGNORECASE))
+
+    # --- LINGUAGENS / RUNTIMES ---
+    if any(k in low_headers for k in ("php", "phpsessid")) or "/wp-content/" in low_html or has_rx(r"\.php(?:[\"'\?&#]|$)"):
         add(languages, "PHP", "cabeçalho/sessão/rotas .php")
-    if "asp.net" in low_headers or "x-aspnet-version" in headers or re.search(r'\.aspx(?:["\'?]|$)', low_html):
-        add(languages, "C# / ASP.NET", "cabeçalho ASP.NET/.aspx")
-    if "__next_data__" in low_html or "/_next/" in low_html or "node" in powered_by.lower() or "express" in low_headers:
-        add(languages, "JavaScript / Node.js", "SSR/runtime Node")
-    if any(tok in low_headers for tok in ("python", "werkzeug", "gunicorn", "uvicorn", "django", "flask", "fastapi")):
-        add(languages, "Python", "assinatura de servidor/framework")
-    if any(tok in low_headers for tok in ("jsessionid", "spring", "tomcat", "servlet")):
-        add(languages, "Java", "cabeçalho/cookie JVM")
-    if any(tok in low_headers for tok in ("phusion passenger", "ruby", "rails", "_rails_")):
-        add(languages, "Ruby", "assinatura Rails/Passenger")
-    if "golang" in low_headers or "go-http-client" in low_headers:
-        add(languages, "Go", "cabeçalho Go")
-    if "<script" in low_html or 'type="module"' in low_html:
-        add(languages, "JavaScript", "scripts client-side")
+    if any(k in low_headers for k in ("asp.net", "x-aspnet-version")) or has_rx(r"\.aspx?(?:[\"'\?&#]|$)"):
+        add(languages, "C# / ASP.NET", "cabeçalho/rotas .NET")
+    if any(k in low_html for k in ("__next_data__", "/_next/", "__nuxt", "_sveltekit")) or any(k in low_headers for k in ("node", "express", "next.js")):
+        add(languages, "JavaScript / Node.js", "SSR/bundle Node/JS")
+    if any(k in low_headers for k in ("python", "werkzeug", "gunicorn", "uvicorn", "django", "flask", "fastapi", "csrftoken")):
+        add(languages, "Python", "assinatura Python/WSGI/ASGI")
+    if any(k in low_headers for k in ("jsessionid", "spring", "tomcat", "servlet", "quarkus", "micronaut")):
+        add(languages, "Java", "assinatura JVM/Servlet")
+    if any(k in low_headers for k in ("phusion passenger", "ruby", "rails", "_rails_")):
+        add(languages, "Ruby", "assinatura Ruby/Rails")
+    if any(k in low_headers for k in ("golang", "fiber", "gin", "echo")) or has_rx(r"\bgo\s+1\.\d+"):
+        add(languages, "Go", "assinatura Go")
+    if has_rx(r"\.ts(?:x)?(?:[\"'\?&#]|$)") or "typescript" in low_html:
+        add(languages, "TypeScript", "referência/bundle TypeScript")
+    if "<script" in low_html or 'type="module"' in low_html or "javascript" in low_headers:
+        add(languages, "JavaScript", "scripts/execução no navegador")
 
-    # Frameworks / CMS
-    if "/_next/" in low_html or "__next_data__" in low_html or "x-nextjs-cache" in headers:
-        add(frameworks, "Next.js", "bundle /_next/ ou __NEXT_DATA__")
-    if "__nuxt" in low_html or "/_nuxt/" in low_html:
-        add(frameworks, "Nuxt", "bundle /_nuxt/ ou __NUXT__")
-    if any(sig in low_html for sig in ("data-reactroot", "__react", "react-dom", "/_next/")):
-        add(frameworks, "React", "marcadores React/DOM")
-    if "ng-version" in low_html or "_nghost-" in low_html or "_ngcontent-" in low_html:
-        add(frameworks, "Angular", "atributos ng-version/_nghost")
-    if "data-v-" in low_html or "__vue" in low_html or "vue.global" in low_html or "vue.runtime" in low_html:
-        add(frameworks, "Vue.js", "atributos data-v-/runtime Vue")
-    if "__sveltekit" in low_html or "svelte-" in low_html:
-        add(frameworks, "Svelte / SvelteKit", "assinatura SvelteKit")
-    if "data-astro-cid" in low_html or "astro-island" in low_html:
+    # --- FRAMEWORKS / CMS ---
+    if any(k in low_html for k in ("/_next/", "__next_data__", "__next_f")) or any(k in low_headers for k in ("x-nextjs-", "next.js")):
+        add(frameworks, "Next.js", "estrutura /_next/ ou __NEXT_DATA__")
+    if any(k in low_html for k in ("/__nuxt", "__nuxt__", "/_nuxt/")):
+        add(frameworks, "Nuxt", "estrutura /_nuxt/ ou __NUXT__")
+    if any(k in low_html for k in ("data-reactroot", "__react", "react-dom", "react.production.min.js", "react.development.js", "/_next/")):
+        add(frameworks, "React", "assinaturas React/ReactDOM")
+    if any(k in low_html for k in ("ng-version", "_nghost-", "_ngcontent-", "angular.min.js")):
+        add(frameworks, "Angular", "atributos/scripts Angular")
+    if any(k in low_html for k in ("data-v-", "__vue", "vue.global", "vue.runtime", "vue.min.js")):
+        add(frameworks, "Vue.js", "assinaturas Vue.js")
+    if any(k in low_html for k in ("__sveltekit", "svelte-", "svelte.js")):
+        add(frameworks, "Svelte / SvelteKit", "assinaturas Svelte/SvelteKit")
+    if any(k in low_html for k in ("data-astro-cid", "astro-island", "astro.build")):
         add(frameworks, "Astro", "ilhas/atributos Astro")
-    if "/wp-content/" in low_html or "/wp-includes/" in low_html:
-        add(frameworks, "WordPress", "estrutura /wp-content/")
-    if "woocommerce" in low_html or "wc-blocks" in low_html:
-        add(frameworks, "WooCommerce", "classes/scripts WooCommerce")
-    if "cdn.shopify.com" in low_html or "myshopify.com" in low_html:
-        add(frameworks, "Shopify", "CDN Shopify")
-    if "drupal.settings" in low_html or "/sites/default/files/" in low_html:
-        add(frameworks, "Drupal", "estrutura Drupal")
-    if "w-webflow-badge" in low_html or "data-wf-site" in low_html:
-        add(frameworks, "Webflow", "atributos data-wf-site")
-    if "wixstatic.com" in low_html or "wix-warmup-data" in low_html:
-        add(frameworks, "Wix", "assets wixstatic")
-    if "laravel_session" in low_headers or "xsrf-token" in low_headers:
-        add(frameworks, "Laravel", "cookies de sessão Laravel")
+    if "/wp-content/" in low_html or "/wp-includes/" in low_html or "wordpress" in generators:
+        add(frameworks, "WordPress", "estrutura/meta WordPress")
+    if any(k in low_html for k in ("woocommerce", "wc-blocks", "wc-ajax")):
+        add(frameworks, "WooCommerce", "assinaturas WooCommerce")
+    if any(k in low_html for k in ("cdn.shopify.com", "myshopify.com", "shopify.theme")):
+        add(frameworks, "Shopify", "assinaturas Shopify")
+    if any(k in low_html for k in ("drupal.settings", "/sites/default/files/")) or "drupal" in generators:
+        add(frameworks, "Drupal", "assinaturas Drupal")
+    if any(k in low_html for k in ("w-webflow-badge", "data-wf-site", "webflow.js")):
+        add(frameworks, "Webflow", "assinaturas Webflow")
+    if any(k in low_html for k in ("wixstatic.com", "wix-warmup-data", "parastorage.com")):
+        add(frameworks, "Wix", "assinaturas Wix")
+    if any(k in low_headers for k in ("laravel_session", "xsrf-token")) or "livewire" in low_html:
+        add(frameworks, "Laravel", "assinaturas Laravel")
+    if "csrfmiddlewaretoken" in low_html or "django" in low_headers:
+        add(frameworks, "Django", "assinaturas Django")
 
-    # Bibliotecas / UI
-    if re.search(r'class="[^"]*(?:sm:|md:|lg:|xl:|px-\d|py-\d|bg-slate-|text-indigo-|rounded-)', combined_html):
-        add(libraries, "Tailwind CSS", "classes utilitárias")
-    if re.search(r'class="[^"]*(?:container-fluid|col-md-\d|btn-primary)', combined_html) or "bootstrap.min." in low_html:
-        add(libraries, "Bootstrap", "grid/classes Bootstrap")
-    if re.search(r"jquery[.-][\d.]*(?:\.min)?\.js", low_html):
-        add(libraries, "jQuery", "script jquery.js")
-    if any(sig in low_html for sig in ("three.min.js", "three.module.js", "three.js")):
-        add(libraries, "Three.js", "bundle Three.js")
-    if any(sig in low_html for sig in ("chart.min.js", "chart.umd.js", "chart.js")):
-        add(libraries, "Chart.js", "bundle Chart.js")
+    # --- BIBLIOTECAS / UI / ANALYTICS ---
+    if has_rx(r'class="[^"]*(?:sm:|md:|lg:|xl:|2xl:|px-\d|py-\d|mx-auto|bg-(?:slate|gray|zinc|indigo|blue|emerald|red)-\d{2,3}|text-(?:slate|gray|zinc|indigo|blue|white)|rounded-(?:xl|2xl|3xl|full))') or "tailwindcss" in low_html:
+        add(libraries, "Tailwind CSS", "classes utilitárias / Tailwind")
+    if has_rx(r'class="[^"]*(?:container-fluid|col-(?:xs|sm|md|lg|xl)-\d+|btn-(?:primary|secondary|success|danger)|navbar-nav)') or has_rx(r"bootstrap(?:\.bundle)?(?:\.min)?\.(?:js|css)"):
+        add(libraries, "Bootstrap", "grid/componentes/assets Bootstrap")
+    if has_rx(r"jquery[.-][\d.]*(?:\.min)?\.js") or "jquery" in low_html and ("$" in asset_code_str or "jQuery" in full_scan_blob):
+        add(libraries, "jQuery", "script/referência jQuery")
+    if has_rx(r"three(?:\.module|\.min)?\.js") or "three" in low_html and ("webglrenderer" in low_html or "perspectivecamera" in low_html):
+        add(libraries, "Three.js", "bundle/API Three.js")
+    if has_rx(r"chart(?:\.umd|\.min)?\.js") or "echarts" in low_html or "apexcharts" in low_html:
+        add(libraries, "Gráficos (Chart.js/ECharts)", "biblioteca de gráficos")
     if "gsap" in low_html or "scrolltrigger" in low_html:
         add(libraries, "GSAP", "animações GSAP")
-    if "x-data=" in low_html or "alpinejs" in low_html:
-        add(libraries, "Alpine.js", "diretivas x-data")
-    if "hx-get=" in low_html or "hx-post=" in low_html:
-        add(libraries, "htmx", "atributos hx-*")
-    if re.search(r'class="[^"]*\bfa-(?:solid|regular|brands|light)\b', combined_html) or "fontawesome" in low_html:
-        add(libraries, "Font Awesome", "ícones fa-*")
-    if "lucide" in low_html or "data-lucide=" in low_html:
+    if has_rx(r"\bx-data=") or "alpinejs" in low_html:
+        add(libraries, "Alpine.js", "diretivas Alpine.js")
+    if has_rx(r"\bhx-(?:get|post|put|delete|swap)=") or "htmx" in low_html:
+        add(libraries, "htmx", "atributos/script htmx")
+    if has_rx(r'class="[^"]*\bfa-(?:solid|regular|brands|light|duotone)\b') or "fontawesome" in low_html or "font-awesome" in low_html:
+        add(libraries, "Font Awesome", "ícones Font Awesome")
+    if "lucide" in low_html or has_rx(r"\bdata-lucide="):
         add(libraries, "Lucide Icons", "ícones Lucide")
-    if "/@vite/" in low_html or "/assets/index-" in low_html:
-        add(libraries, "Vite", "estrutura de build Vite")
+    if "/@vite/" in low_html or has_rx(r"/assets/index-[A-Za-z0-9_-]+\.js"):
+        add(libraries, "Vite", "build/assets Vite")
+    if "googletagmanager.com/gtm.js" in low_html or "gtag/js" in low_html or "google-analytics.com" in low_html:
+        add(libraries, "Google Analytics / GTM", "tags de mensuração")
+    if "sentry.io" in low_html or "__sentry__" in low_html:
+        add(libraries, "Sentry", "monitoramento de erros")
 
-    # Plataformas / CDN / Servidor
+    # --- PLATAFORMAS / CDN / SERVIDOR ---
     if cdn and cdn != "Direto / Não identificado":
         add(platforms, cdn, "cabeçalho CDN")
     if server and server != "Não informado":
@@ -454,6 +511,6 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
         "frameworks": frameworks,
         "libraries": libraries,
         "platforms": platforms,
-        "evidence": evidence[:15],
-        "note": "Detecção baseada em assinaturas públicas estruturais (cabeçalhos HTTP, cookies, atributos e bundles).",
+        "evidence": evidence[:20],
+        "note": "Detecção baseada em assinaturas públicas estruturais (cabeçalhos HTTP, cookies, meta tags, HTML, bundles e assets).",
     }
