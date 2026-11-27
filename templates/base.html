@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -156,10 +156,7 @@
           </p>
         </div>
 
-        <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 sm:col-span-5">
-          <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix de apoio ao projeto" class="h-36 w-36 rounded-lg object-contain sm:h-40 sm:w-40">
-          <span data-i18n="support_qr_caption" class="mt-1.5 font-mono text-[11px] font-semibold text-slate-500">QR Code Pix · Apoio</span>
-        </div>
+        
       </div>
 
       <div class="mt-6 flex justify-end">
@@ -229,10 +226,7 @@
           <p id="paywall-email-error" class="hidden text-xs font-semibold text-red-700"></p>
         </div>
 
-        <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3.5 sm:col-span-5">
-          <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix de apoio ao projeto" class="h-36 w-36 rounded-lg object-contain sm:h-40 sm:w-40">
-          <span class="mt-1.5 font-mono text-[11px] font-semibold text-slate-500">QR Code Pix · Apoio</span>
-        </div>
+        
       </div>
 
       <div class="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
@@ -267,10 +261,7 @@
               <span id="pix-copied-msg" class="hidden font-mono text-xs font-semibold text-emerald-700">OK</span>
             </div>
           </div>
-          <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 md:col-span-4">
-            <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix" class="h-36 w-36 rounded-lg object-contain">
-            <span class="mt-1.5 font-mono text-[11px] text-slate-500">Pix · {{ pix_key }}</span>
-          </div>
+          
         </div>
       </div>
 
@@ -291,6 +282,814 @@
       </div>
     </div>
   </footer>
+
+  <script>
+    (function () {
+      const I18N = {
+        pt: {
+          skip_to_content: 'Pular para o conteúdo',
+          header_support_btn: 'Suporte ao projeto',
+          support_modal_badge: 'Apoio e doação voluntária',
+          support_modal_title: 'Apoie o checkUp',
+          support_modal_desc: 'Contribuição livre e voluntária para manter o diagnóstico gratuito e apoiar novas melhorias do projeto.',
+          pix_key_label: 'Chave Pix',
+          support_modal_note: 'Doação livre via Pix ou QR Code. Muito obrigado pelo apoio!',
+          support_qr_caption: 'QR Code Pix · Apoio',
+          close_btn: 'Fechar',
+          privacy_link: 'Política de privacidade',
+          hero_badge: 'Diagnóstico gratuito em tempo real',
+          hero_tags: 'SSL · Infraestrutura · Acessibilidade · Qualidade',
+          hero_title: 'Seu site está em boa forma?',
+          hero_subtitle: 'Cole o endereço do site e veja números objetivos e o que corrigir: validade e expiração do certificado SSL, tempo de resposta, cabeçalhos de segurança, contraste de cores, imagens e links quebrados, textos de teste e comportamento no celular.',
+          url_placeholder: 'exemplo.com.br',
+          check_btn: 'Verificar site',
+          wait_note: 'A análise abre a página em um navegador real e testa SSL, rede, qualidade e acessibilidade.',
+          live_title: 'Status ao vivo — alvos públicos abertos (clique para analisar)',
+          live_refresh: 'Atualizar agora',
+          live_click_hint: 'Clique para abrir análise completa →',
+          live_open_site: 'Abrir site ↗',
+          live_lgpd_note: 'Monitora endpoints públicos abertos de referência e permite clicar em qualquer card para rodar e abrir o diagnóstico completo daquele alvo.',
+          waitlist_title: 'Quer ser avisado sobre as novidades?',
+          waitlist_desc: 'Esta verificação automática não substitui uma revisão feita por uma pessoa, leitores de tela ou testes manuais. Deixe seu e-mail para acompanhar as próximas melhorias.',
+          waitlist_btn: 'Quero ser avisado',
+          support_badge: 'Suporte do projeto',
+          support_title: 'Apoie o checkUp via Pix',
+          support_desc: 'Contribuição voluntária para manter o diagnóstico gratuito e evoluir novas checagens de infraestrutura e acessibilidade.',
+          copy_pix_btn: 'Copiar chave Pix',
+          rights_text: 'Todos os direitos reservados.',
+          created_by: 'Criado por',
+          unique_visitors: 'Visitantes únicos',
+          page_views: 'Acessos à página',
+          paywall_badge: 'Apoio voluntário • Sem cobrança obrigatória',
+          paywall_title: 'Receber relatório (JSON ou PDF/Impressão)',
+          paywall_desc: 'PDF disponível — é só colocar seu e-mail que eu mando! Se quiser dar um apoio ao projeto, copie a chave Pix ou use o QR Code. Abraços!',
+          paywall_email_label: 'Seu e-mail para receber o relatório',
+          invalid_email: 'Informe um e-mail válido para receber o relatório.',
+          cancel_btn: 'Cancelar',
+          continue_send_btn: 'Confirmar e gerar / enviar',
+          paid_cta_label: 'Baixe agora os arquivos completos FREE',
+          btn_download_json: 'Baixar JSON',
+          btn_print_pdf: 'Imprimir / PDF',
+          report_eyebrow: 'Relatório da análise',
+          report_heading: 'Resultado da verificação',
+          what_to_fix: 'O que corrigir',
+          general_summary_title: 'Resumo Geral Técnico — Riscos e Fatores que Podem Incapacitar ou Comprometer o Site'
+        },
+        en: {
+          skip_to_content: 'Skip to content',
+          header_support_btn: 'Project support',
+          support_modal_badge: 'Voluntary support & donation',
+          support_modal_title: 'Support checkUp',
+          support_modal_desc: 'Free, voluntary contribution to keep diagnostics free and support new project improvements.',
+          pix_key_label: 'Pix Key',
+          support_modal_note: 'Voluntary donation via Pix or QR Code. Thank you for your support!',
+          support_qr_caption: 'Pix QR Code · Support',
+          close_btn: 'Close',
+          privacy_link: 'Privacy policy',
+          hero_badge: 'Free real-time diagnostic',
+          hero_tags: 'SSL · Infrastructure · Accessibility · Quality',
+          hero_title: 'Is your website in good shape?',
+          hero_subtitle: 'Paste a website URL and get objective metrics and fixes: SSL certificate validity and expiration, response time, security headers, color contrast, broken images and links, placeholder text, and mobile layout.',
+          url_placeholder: 'example.com',
+          check_btn: 'Check website',
+          wait_note: 'The scan opens the page in a real browser and checks SSL, network, code quality, and accessibility.',
+          live_title: 'Live status — open public targets (click to inspect)',
+          live_refresh: 'Refresh now',
+          live_click_hint: 'Click to open full analysis →',
+          live_open_site: 'Open site ↗',
+          live_lgpd_note: 'Monitors open public reference endpoints and lets you click any card to run and open a full diagnostic for that target.',
+          waitlist_title: 'Want to be notified about updates?',
+          waitlist_desc: 'Automated checks do not replace human review, screen readers, or manual testing. Leave your email for upcoming improvements.',
+          waitlist_btn: 'Notify me',
+          support_badge: 'Project support',
+          support_title: 'Support checkUp via Pix',
+          support_desc: 'Voluntary support to keep diagnostics free and build deeper infrastructure and accessibility checks.',
+          copy_pix_btn: 'Copy Pix key',
+          rights_text: 'All rights reserved.',
+          created_by: 'Created by',
+          unique_visitors: 'Unique visitors',
+          page_views: 'Page views',
+          paywall_badge: 'Voluntary support • Free report',
+          paywall_title: 'Receive report (JSON or PDF/Print)',
+          paywall_desc: 'PDF ready — just enter your email and I\'ll send it! If you want to support the project, copy the Pix key or scan the QR code. Cheers!',
+          paywall_email_label: 'Your email to receive the report',
+          invalid_email: 'Please enter a valid email address to receive the report.',
+          cancel_btn: 'Cancel',
+          continue_send_btn: 'Confirm & generate / send',
+          paid_cta_label: 'Download full audit files now for R$5.99',
+          btn_download_json: 'Download JSON',
+          btn_print_pdf: 'Print / PDF',
+          report_eyebrow: 'Analysis Report',
+          report_heading: 'Verification Result',
+          what_to_fix: 'What to Fix',
+          general_summary_title: 'General Technical Summary — Risks and Factors That Can Impair or Compromise the Site'
+        }
+      };
+
+      function syncPdfLangBox(lang) { const old = document.getElementById('pdf-en-summary-box'); if (old) old.remove(); }
+
+      function applyLanguage(lang) {
+        const chosen = lang === 'en' ? 'en' : 'pt';
+        window.__checkupLang = chosen;
+        document.documentElement.lang = chosen === 'en' ? 'en' : 'pt-BR';
+        try { localStorage.setItem('checkup_lang', chosen); } catch (_e) {}
+        const sel = document.getElementById('lang-selector');
+        if (sel) sel.value = chosen;
+
+        const dict = I18N[chosen];
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          const key = el.getAttribute('data-i18n');
+          if (!dict[key]) return;
+          const span = el.querySelector('span');
+          if (span) {
+            span.textContent = dict[key];
+          } else {
+            el.textContent = dict[key];
+          }
+        });
+        const urlInput = document.getElementById('url');
+        if (urlInput && dict.url_placeholder) urlInput.placeholder = dict.url_placeholder;
+        const badgeEl = document.getElementById('loading-badge');
+        if (badgeEl) badgeEl.textContent = chosen === 'en' ? 'analyzing' : 'analisando';
+
+        syncPdfLangBox(chosen);
+        window.dispatchEvent(new CustomEvent('checkup:langchange', { detail: { lang: chosen } }));
+      }
+
+      window.checkupApplyLanguage = applyLanguage;
+      window.checkupSyncPdfLangBox = syncPdfLangBox;
+
+      function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        const mode = isDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', mode);
+        if (document.body) {
+          document.body.setAttribute('data-theme', mode);
+        }
+        try {
+          if (localStorage.getItem('checkup_cookie_consent_v1') !== 'rejected') {
+            localStorage.setItem('checkup_theme', mode);
+          }
+        } catch (_e) {}
+        const sun = document.getElementById('icon-sun');
+        const moon = document.getElementById('icon-moon');
+        const label = document.getElementById('theme-label');
+        if (sun) sun.classList.toggle('hidden', !isDark);
+        if (moon) moon.classList.toggle('hidden', isDark);
+        if (label) label.textContent = isDark ? 'Dark' : 'Light';
+      }
+
+      const langSelect = document.getElementById('lang-selector');
+      if (langSelect) langSelect.addEventListener('change', function () { applyLanguage(langSelect.value); });
+
+      const themeBtn = document.getElementById('theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function () {
+          applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+      }
+
+      const pixKey = '{{ pix_key }}';
+      const copyPixBtn = document.getElementById('btn-copy-pix');
+      if (copyPixBtn) {
+        copyPixBtn.addEventListener('click', function () {
+          const doneMsg = document.getElementById('pix-copied-msg');
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pixKey).catch(function () {});
+          if (doneMsg) {
+            doneMsg.classList.remove('hidden');
+            setTimeout(function () { doneMsg.classList.add('hidden'); }, 2000);
+          }
+        });
+      }
+
+      const supportModal = document.getElementById('support-donation-modal');
+      const headerSupportBtn = document.getElementById('btn-header-support');
+      const supportCloseBtn = document.getElementById('support-modal-close');
+      const supportDoneBtn = document.getElementById('support-modal-done');
+      const modalCopyPixBtn = document.getElementById('btn-modal-copy-pix');
+
+      function openSupportModal() {
+        if (!supportModal) return;
+        supportModal.classList.remove('hidden');
+        supportModal.classList.add('flex');
+      }
+
+      function hideSupportModal() {
+        if (!supportModal) return;
+        supportModal.classList.add('hidden');
+        supportModal.classList.remove('flex');
+      }
+
+      if (headerSupportBtn) headerSupportBtn.addEventListener('click', openSupportModal);
+      if (supportCloseBtn) supportCloseBtn.addEventListener('click', hideSupportModal);
+      if (supportDoneBtn) supportDoneBtn.addEventListener('click', hideSupportModal);
+      if (supportModal) {
+        supportModal.addEventListener('click', function (ev) {
+          if (ev.target === supportModal) hideSupportModal();
+        });
+      }
+      if (modalCopyPixBtn) {
+        modalCopyPixBtn.addEventListener('click', function () {
+          const doneMsg = document.getElementById('modal-pix-copied-msg');
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pixKey).catch(function () {});
+          if (doneMsg) {
+            doneMsg.classList.remove('hidden');
+            setTimeout(function () { doneMsg.classList.add('hidden'); }, 2000);
+          }
+        });
+      }
+
+      let pendingExportCallback = null;
+      const modal = document.getElementById('paywall-modal');
+      const closeBtn = document.getElementById('paywall-close');
+      const cancelBtn = document.getElementById('paywall-cancel');
+      const continueBtn = document.getElementById('paywall-continue');
+      const emailInput = document.getElementById('paywall-email-input');
+      const emailErr = document.getElementById('paywall-email-error');
+
+      window.requestPaidReportAction = function (callback) {
+        pendingExportCallback = callback;
+        if (emailErr) { emailErr.classList.add('hidden'); emailErr.textContent = ''; }
+        const curLang = window.__checkupLang === 'en' ? 'en' : 'pt';
+        const radioToSelect = document.querySelector('input[name="modal_report_lang"][value="' + curLang + '"]');
+        if (radioToSelect) radioToSelect.checked = true;
+        if (!modal) { if (typeof callback === 'function') callback('', curLang); return; }
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        if (emailInput) emailInput.focus();
+      };
+
+      function hidePaywallModal() {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      if (closeBtn) closeBtn.addEventListener('click', hidePaywallModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', hidePaywallModal);
+      if (modal) {
+        modal.addEventListener('click', function (ev) {
+          if (ev.target === modal) hidePaywallModal();
+        });
+      }
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape') {
+          if (supportModal && !supportModal.classList.contains('hidden')) hideSupportModal();
+          if (modal && !modal.classList.contains('hidden')) hidePaywallModal();
+        }
+      });
+      if (continueBtn) {
+        continueBtn.addEventListener('click', function () {
+          const addr = emailInput ? emailInput.value.trim() : '';
+          const curLang = window.__checkupLang === 'en' ? 'en' : 'pt';
+          if (!addr || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)) {
+            if (emailErr) {
+              emailErr.textContent = I18N[curLang].invalid_email;
+              emailErr.classList.remove('hidden');
+            }
+            return;
+          }
+          const checkedRadio = document.querySelector('input[name="modal_report_lang"]:checked');
+          const chosenReportLang = checkedRadio ? checkedRadio.value : curLang;
+          const cb = pendingExportCallback;
+          pendingExportCallback = null;
+          hidePaywallModal();
+          if (typeof cb === 'function') cb(addr, chosenReportLang);
+        });
+      }
+
+      let initialTheme = 'light';
+      let initialLang = 'pt';
+      try {
+        if (localStorage.getItem('checkup_theme') === 'dark') initialTheme = 'dark';
+        if (localStorage.getItem('checkup_lang') === 'en') initialLang = 'en';
+      } catch (_e) {}
+      applyTheme(initialTheme);
+      applyLanguage(initialLang);
+    })();
+  </script>
+<script id="checkup-global-report-i18n">
+(function () {
+  const EXACT_PHRASES = [
+    ["Elementos focáveis ocultos com aria-hidden='true'", "Focusable elements hidden with aria-hidden='true'"],
+    ["Um usuário de teclado pode focar um controle que foi marcado como invisível para leitores de tela.", "A keyboard user can focus a control marked as hidden from screen readers."],
+    ["Aplique tabindex='-1' ou remova aria-hidden='true' de contêineres com controles interativos.", "Apply tabindex='-1' or remove aria-hidden='true' from containers with interactive controls."],
+    ["Campos de formulário sem rótulo", "Form fields without labels"],
+    ["O visitante não sabe o que preencher em cada campo.", "Visitors do not know what to enter in each field."],
+    ["Associe um <label for=\"id\"> ao campo ou use aria-label.", "Associate a <label for=\"id\"> with the field or use aria-label."],
+    ["URL canônica ausente (link rel='canonical')", "Missing canonical URL (link rel='canonical')"],
+    ["Sem canonical, variações de URL com parâmetros podem diluir a indexação nos buscadores.", "Without canonical, URL variations with query parameters can dilute search engine indexing."],
+    ["Adicione <link rel=\"canonical\" href=\"...\"> apontando para a URL principal.", "Add <link rel=\"canonical\" href=\"...\"> pointing to the main URL."],
+    ["Página sem título principal (h1)", "Page missing main heading (h1)"],
+    ["O h1 mostra sobre o que é a página, para visitantes e buscadores.", "The h1 shows what the page is about for visitors and search engines."],
+    ["Inclua um único <h1> com o assunto principal.", "Include a single <h1> with the main topic."],
+    ["Bloqueio de Rastreamento em robots.txt: A diretiva Disallow: / bloqueia rastreadores na raiz do domínio, podendo impedir a indexação e descoberta orgânica do site.", "robots.txt Crawl Block: The Disallow: / directive blocks crawlers at the domain root, which can prevent indexing and organic discovery of the site."],
+    ["Revisar as regras de /robots.txt para liberar as áreas públicas desejadas.", "Review /robots.txt rules to allow desired public areas."],
+    ["Pontuação geral (0 a 100)", "Overall score (0 to 100)"],
+    ["Boa forma geral", "Good overall shape"],
+    ["Atenção necessária", "Needs attention"],
+    ["Crítico — exige ajustes", "Critical — requires fixes"],
+    ["Nenhum problema encontrado nas verificações automáticas.", "No issues found in automated checks."],
+    ["Clique em um card de prioridade abaixo para abrir diretamente a lista do que precisa ser corrigido.", "Click a priority card below to jump straight to the list of items to fix."],
+    ["Tempo resposta", "Response time"],
+    ["Prioridade alta", "High priority"],
+    ["Prioridade média", "Medium priority"],
+    ["Prioridade baixa", "Low priority"],
+    ["Ver lista →", "View list →"],
+    ["O que corrigir", "What to fix"],
+    ["Como corrigir:", "How to fix:"],
+    ["Local:", "Location:"],
+    ["Nenhum problema encontrado para este filtro.", "No issues found for this filter."],
+    ["Arquivos completos da auditoria (JSON + PDF Técnico)", "Complete audit files (JSON + Technical PDF)"],
+    ["Inclui métricas, serviços extras, resumo geral técnico e recomendações", "Includes metrics, extra checks, general technical summary, and recommendations"],
+    ["Baixe agora os arquivos completos FREE", "Download full files now for FREE"],
+    ["Baixar JSON", "Download JSON"],
+    ["Imprimir / PDF", "Print / PDF"],
+    ["Relatório da análise", "Audit report"],
+    ["Resultado da verificação", "Verification result"],
+    ["Abrir site ↗", "Open site ↗"],
+    ["Certificado SSL / TLS", "SSL / TLS Certificate"],
+    ["Certificado SSL / TLS:", "SSL / TLS Certificate:"],
+    ["SEM HTTPS", "NO HTTPS"],
+    ["Sem HTTPS", "No HTTPS"],
+    ["VÁLIDO", "VALID"],
+    ["Válido", "Valid"],
+    ["INVÁLIDO / EXPIRADO", "INVALID / EXPIRED"],
+    ["Inválido / Expirado", "Invalid / Expired"],
+    ["NÃO VERIFICADO", "UNVERIFIED"],
+    ["Não verificado", "Unverified"],
+    ["Validade:", "Validity:"],
+    ["Expira em:", "Expires on:"],
+    ["Protocolo / Emissor:", "Protocol / Issuer:"],
+    ["Linguagens, Frameworks e Bibliotecas", "Languages, Frameworks & Libraries"],
+    ["assinaturas públicas", "public signatures"],
+    ["Linguagens:", "Languages:"],
+    ["Frameworks / CMS:", "Frameworks / CMS:"],
+    ["Bibliotecas / UI:", "Libraries / UI:"],
+    ["Servidor / CDN:", "Server / CDN:"],
+    ["Frameworks:", "Frameworks:"],
+    ["Bibliotecas:", "Libraries:"],
+    ["Stack detectada:", "Detected stack:"],
+    ["Resumo de Prioridades:", "Priority Summary:"],
+    ["Não identificado", "Not detected"],
+    ["Detecção indicativa por assinaturas públicas (cabeçalhos HTTP, HTML e DOM); sites podem ocultar ou ofuscar tecnologias.", "Indicative detection based on public signatures (HTTP headers, HTML, and DOM); sites may hide or obfuscate technologies."],
+    ["checkUp — Laudo Técnico de Auditoria Web", "checkUp — Technical Web Audit Report"],
+    ["Relatório Técnico de Infraestrutura, Acessibilidade e Qualidade", "Technical Report on Infrastructure, Accessibility, and Quality"],
+    ["Não Conformidades Identificadas por Ordem de Prioridade", "Findings by Priority Level"],
+    ["PRIORIDADE ALTA (CRÍTICO)", "HIGH PRIORITY (CRITICAL)"],
+    ["PRIORIDADE MÉDIA (MODERADO)", "MEDIUM PRIORITY (MODERATE)"],
+    ["PRIORIDADE BAIXA (MELHORIA)", "LOW PRIORITY (IMPROVEMENT)"],
+    ["Resumo Geral Técnico — Riscos e Fatores que Podem Incapacitar ou Comprometer o Site", "General Technical Summary — Risks and Factors That Can Impair or Compromise the Site"],
+    ["Diagnóstico Consolidado:", "Consolidated Diagnosis:"],
+    ["Diagnóstico:", "Diagnosis:"],
+    ["Ação corretiva:", "Corrective action:"],
+    ["Documento técnico gerado automaticamente pelo checkUp. Recomenda-se validação complementar com leitores de tela e revisão humana.", "Technical document automatically generated by checkUp. Complementary validation with screen readers and human review is recommended."],
+    ["Contraste de cores insuficiente", "Insufficient color contrast"],
+    ["Texto com pouco contraste em relação ao fundo é difícil de ler para muita gente, inclusive em telas com muito brilho.", "Low-contrast text against the background is hard to read for many users, especially on bright screens."],
+    ["Use cores com contraste de pelo menos 4,5:1 para textos normais e 3:1 para textos grandes.", "Use colors with at least a 4.5:1 contrast ratio for normal text and 3:1 for large text."],
+    ["Em telas pequenas, parte do conteúdo fica fora da tela e obriga a rolar para o lado.", "On small screens, part of the content overflows horizontally and forces sideways scrolling."],
+    ["Ajuste elementos com largura fixa e use larguras relativas ou responsivas.", "Adjust fixed-width elements and use relative or responsive widths."],
+    ["Múltiplas falhas simultâneas em requisições da página", "Multiple simultaneous failures in page requests"],
+    ["Várias chamadas falharam durante o carregamento, elevando o risco de telas incompletas ou componentes quebrados.", "Several network calls failed during load, increasing the risk of incomplete screens or broken components."],
+    ["Audite falhas de rede, timeouts, bloqueios CORS e endpoints indisponíveis.", "Audit network failures, timeouts, CORS blocks, and unavailable endpoints."],
+    ["robots.txt bloqueia o acesso geral ao site (Disallow: /)", "robots.txt blocks general site access (Disallow: /)"],
+    ["A regra Disallow: / impede rastreadores de indexar o site ou partes críticas dele.", "The Disallow: / rule prevents crawlers from indexing the site or critical sections of it."],
+    ["Revise /robots.txt para não bloquear rotas públicas importantes sem intenção.", "Review /robots.txt so important public routes are not unintentionally blocked."],
+    ["Quem não enxerga a imagem não sabe o que ela mostra, e o Google também não.", "Users who cannot see the image do not know what it depicts, and search engines cannot index it properly."],
+    ["Adicione alt=\"descrição curta\" ou alt=\"\" se a imagem for só decorativa.", "Add alt=\"short description\" or alt=\"\" if the image is purely decorative."],
+    ["O visitante não consegue ampliar a página para ler melhor.", "Visitors cannot zoom in on the page to read more comfortably."],
+    ["Remova user-scalable=no e maximum-scale da meta viewport.", "Remove user-scalable=no and maximum-scale from the viewport meta tag."],
+    ["Cabeçalhos HTTP de segurança ajudam a proteger o site e os visitantes contra ataques comuns no navegador.", "HTTP security headers help protect the site and visitors against common browser-based attacks."],
+    ["Configure os cabeçalhos ausentes no servidor web ou proxy reverso (Nginx, Apache, Cloudflare, etc.).", "Configure the missing headers on your web server or reverse proxy (Nginx, Apache, Cloudflare, etc.)."],
+    ["Entregue o conteúdo principal no HTML inicial, ou use renderização no servidor para as partes essenciais.", "Deliver primary content in the initial HTML or use server-side rendering for essential sections."],
+    ["Recursos externos ou chamadas da página retornaram erro HTTP (4xx/5xx) ou falharam na rede.", "External resources or page requests returned HTTP errors (4xx/5xx) or failed on the network."],
+    ["Inspecione a aba Rede do navegador (F12) e corrija URLs, permissões (CORS) ou endpoints instáveis.", "Inspect the browser Network tab (F12) and fix broken URLs, CORS permissions, or unstable endpoints."],
+    ["Erros de script podem impedir funções como menus, formulários e botões.", "Script errors can break interactive features such as menus, forms, and buttons."],
+    ["Abra o console do navegador (F12), corrija os erros e teste as funções da página.", "Open the browser console (F12), fix the errors, and test page interactions."],
+    ["Vídeos e mapas incorporados ficam sem descrição.", "Embedded videos and maps lack an accessible description."],
+    ["Adicione title=\"descrição\" no iframe.", "Add title=\"description\" to the iframe element."],
+    ["Expor linguagem ou framework no cabeçalho facilita reconhecimento automatizado da stack.", "Exposing the server language or framework in headers facilitates automated stack fingerprinting."],
+    ["Remova ou oculte o cabeçalho X-Powered-By na aplicação ou proxy reverso.", "Remove or hide the X-Powered-By header in your application or reverse proxy."],
+    ["Cookies sem Secure, HttpOnly ou SameSite ficam mais expostos a roubo via script ou envio cruzado entre sites.", "Cookies without Secure, HttpOnly, or SameSite are more exposed to script theft or cross-site request forgery."],
+    ["Configure HttpOnly, Secure (em HTTPS) e SameSite=Lax ou Strict nos cookies emitidos pelo servidor.", "Set HttpOnly, Secure (over HTTPS), and SameSite=Lax or Strict on cookies issued by the server."],
+    ["Scripts externos no <head> sem defer, async ou type='module' podem atrasar a renderização inicial.", "External scripts in <head> without defer, async, or type='module' can delay initial rendering."],
+    ["Adicione defer ou async nos scripts não críticos ou mova para o final do <body>.", "Add defer or async to non-critical scripts or move them to the end of <body>."],
+    ["Cabeçalho Permissions-Policy ausente", "Missing Permissions-Policy header"],
+    ["Restringe acesso a câmera, microfone, geolocalização e APIs sensíveis do navegador.", "Restricts access to camera, microphone, geolocation, and sensitive browser APIs."],
+    ["Adicione o cabeçalho Permissions-Policy na configuração do servidor/CDN.", "Add the Permissions-Policy header in your server/CDN configuration."],
+    ["Cabeçalho Cross-Origin-Opener-Policy (COOP) ausente", "Missing Cross-Origin-Opener-Policy (COOP) header"],
+    ["Isola o contexto de navegação contra ataques cross-origin (como Spectre/XS-Leaks).", "Isolates the browsing context against cross-origin attacks (such as Spectre/XS-Leaks)."],
+    ["Adicione o cabeçalho Cross-Origin-Opener-Policy (COOP) na configuração do servidor/CDN.", "Add the Cross-Origin-Opener-Policy (COOP) header in your server/CDN configuration."],
+    ["Cabeçalho Cross-Origin-Resource-Policy (CORP) ausente", "Missing Cross-Origin-Resource-Policy (CORP) header"],
+    ["Define quais origens podem carregar este recurso em contextos cross-origin.", "Defines which origins are allowed to load this resource in cross-origin contexts."],
+    ["Adicione o cabeçalho Cross-Origin-Resource-Policy (CORP) na configuração do servidor/CDN.", "Add the Cross-Origin-Resource-Policy (CORP) header in your server/CDN configuration."],
+    ["Marcos semânticos (landmarks) ausentes na página", "Missing semantic landmarks on page"],
+    ["Landmarks estruturais ajudam usuários de leitores de tela a navegar rapidamente entre topo, conteúdo principal e rodapé.", "Structural landmarks help screen reader users quickly navigate between header, main content, and footer."],
+    ["Organize a página com <header>, <main> e 
+
+  <script>
+    (function () {
+      const I18N = {
+        pt: {
+          skip_to_content: 'Pular para o conteúdo',
+          header_support_btn: 'Suporte ao projeto',
+          support_modal_badge: 'Apoio e doação voluntária',
+          support_modal_title: 'Apoie o checkUp',
+          support_modal_desc: 'Contribuição livre e voluntária para manter o diagnóstico gratuito e apoiar novas melhorias do projeto.',
+          pix_key_label: 'Chave Pix',
+          support_modal_note: 'Doação livre via Pix ou QR Code. Muito obrigado pelo apoio!',
+          support_qr_caption: 'QR Code Pix · Apoio',
+          close_btn: 'Fechar',
+          privacy_link: 'Política de privacidade',
+          hero_badge: 'Diagnóstico gratuito em tempo real',
+          hero_tags: 'SSL · Infraestrutura · Acessibilidade · Qualidade',
+          hero_title: 'Seu site está em boa forma?',
+          hero_subtitle: 'Cole o endereço do site e veja números objetivos e o que corrigir: validade e expiração do certificado SSL, tempo de resposta, cabeçalhos de segurança, contraste de cores, imagens e links quebrados, textos de teste e comportamento no celular.',
+          url_placeholder: 'exemplo.com.br',
+          check_btn: 'Verificar site',
+          wait_note: 'A análise abre a página em um navegador real e testa SSL, rede, qualidade e acessibilidade.',
+          live_title: 'Status ao vivo — alvos públicos abertos (clique para analisar)',
+          live_refresh: 'Atualizar agora',
+          live_click_hint: 'Clique para abrir análise completa →',
+          live_open_site: 'Abrir site ↗',
+          live_lgpd_note: 'Monitora endpoints públicos abertos de referência e permite clicar em qualquer card para rodar e abrir o diagnóstico completo daquele alvo.',
+          waitlist_title: 'Quer ser avisado sobre as novidades?',
+          waitlist_desc: 'Esta verificação automática não substitui uma revisão feita por uma pessoa, leitores de tela ou testes manuais. Deixe seu e-mail para acompanhar as próximas melhorias.',
+          waitlist_btn: 'Quero ser avisado',
+          support_badge: 'Suporte do projeto',
+          support_title: 'Apoie o checkUp via Pix',
+          support_desc: 'Contribuição voluntária para manter o diagnóstico gratuito e evoluir novas checagens de infraestrutura e acessibilidade.',
+          copy_pix_btn: 'Copiar chave Pix',
+          rights_text: 'Todos os direitos reservados.',
+          created_by: 'Criado por',
+          unique_visitors: 'Visitantes únicos',
+          page_views: 'Acessos à página',
+          paywall_badge: 'Apoio voluntário • Sem cobrança obrigatória',
+          paywall_title: 'Receber relatório (JSON ou PDF/Impressão)',
+          paywall_desc: 'PDF disponível — é só colocar seu e-mail que eu mando! Se quiser dar um apoio ao projeto, copie a chave Pix ou use o QR Code. Abraços!',
+          paywall_email_label: 'Seu e-mail para receber o relatório',
+          invalid_email: 'Informe um e-mail válido para receber o relatório.',
+          cancel_btn: 'Cancelar',
+          continue_send_btn: 'Confirmar e gerar / enviar',
+          paid_cta_label: 'Baixe agora os arquivos completos FREE',
+          btn_download_json: 'Baixar JSON',
+          btn_print_pdf: 'Imprimir / PDF',
+          report_eyebrow: 'Relatório da análise',
+          report_heading: 'Resultado da verificação',
+          what_to_fix: 'O que corrigir',
+          general_summary_title: 'Resumo Geral Técnico — Riscos e Fatores que Podem Incapacitar ou Comprometer o Site'
+        },
+        en: {
+          skip_to_content: 'Skip to content',
+          header_support_btn: 'Project support',
+          support_modal_badge: 'Voluntary support & donation',
+          support_modal_title: 'Support checkUp',
+          support_modal_desc: 'Free, voluntary contribution to keep diagnostics free and support new project improvements.',
+          pix_key_label: 'Pix Key',
+          support_modal_note: 'Voluntary donation via Pix or QR Code. Thank you for your support!',
+          support_qr_caption: 'Pix QR Code · Support',
+          close_btn: 'Close',
+          privacy_link: 'Privacy policy',
+          hero_badge: 'Free real-time diagnostic',
+          hero_tags: 'SSL · Infrastructure · Accessibility · Quality',
+          hero_title: 'Is your website in good shape?',
+          hero_subtitle: 'Paste a website URL and get objective metrics and fixes: SSL certificate validity and expiration, response time, security headers, color contrast, broken images and links, placeholder text, and mobile layout.',
+          url_placeholder: 'example.com',
+          check_btn: 'Check website',
+          wait_note: 'The scan opens the page in a real browser and checks SSL, network, code quality, and accessibility.',
+          live_title: 'Live status — open public targets (click to inspect)',
+          live_refresh: 'Refresh now',
+          live_click_hint: 'Click to open full analysis →',
+          live_open_site: 'Open site ↗',
+          live_lgpd_note: 'Monitors open public reference endpoints and lets you click any card to run and open a full diagnostic for that target.',
+          waitlist_title: 'Want to be notified about updates?',
+          waitlist_desc: 'Automated checks do not replace human review, screen readers, or manual testing. Leave your email for upcoming improvements.',
+          waitlist_btn: 'Notify me',
+          support_badge: 'Project support',
+          support_title: 'Support checkUp via Pix',
+          support_desc: 'Voluntary support to keep diagnostics free and build deeper infrastructure and accessibility checks.',
+          copy_pix_btn: 'Copy Pix key',
+          rights_text: 'All rights reserved.',
+          created_by: 'Created by',
+          unique_visitors: 'Unique visitors',
+          page_views: 'Page views',
+          paywall_badge: 'Voluntary support • Free report',
+          paywall_title: 'Receive report (JSON or PDF/Print)',
+          paywall_desc: 'PDF ready — just enter your email and I\'ll send it! If you want to support the project, copy the Pix key or scan the QR code. Cheers!',
+          paywall_email_label: 'Your email to receive the report',
+          invalid_email: 'Please enter a valid email address to receive the report.',
+          cancel_btn: 'Cancel',
+          continue_send_btn: 'Confirm & generate / send',
+          paid_cta_label: 'Download full audit files now for R$5.99',
+          btn_download_json: 'Download JSON',
+          btn_print_pdf: 'Print / PDF',
+          report_eyebrow: 'Analysis Report',
+          report_heading: 'Verification Result',
+          what_to_fix: 'What to Fix',
+          general_summary_title: 'General Technical Summary — Risks and Factors That Can Impair or Compromise the Site'
+        }
+      };
+
+      function syncPdfLangBox(lang) { const old = document.getElementById('pdf-en-summary-box'); if (old) old.remove(); }
+
+      function applyLanguage(lang) {
+        const chosen = lang === 'en' ? 'en' : 'pt';
+        window.__checkupLang = chosen;
+        document.documentElement.lang = chosen === 'en' ? 'en' : 'pt-BR';
+        try { localStorage.setItem('checkup_lang', chosen); } catch (_e) {}
+        const sel = document.getElementById('lang-selector');
+        if (sel) sel.value = chosen;
+
+        const dict = I18N[chosen];
+        document.querySelectorAll('[data-i18n]').forEach(function (el) {
+          const key = el.getAttribute('data-i18n');
+          if (!dict[key]) return;
+          const span = el.querySelector('span');
+          if (span) {
+            span.textContent = dict[key];
+          } else {
+            el.textContent = dict[key];
+          }
+        });
+        const urlInput = document.getElementById('url');
+        if (urlInput && dict.url_placeholder) urlInput.placeholder = dict.url_placeholder;
+        const badgeEl = document.getElementById('loading-badge');
+        if (badgeEl) badgeEl.textContent = chosen === 'en' ? 'analyzing' : 'analisando';
+
+        syncPdfLangBox(chosen);
+        window.dispatchEvent(new CustomEvent('checkup:langchange', { detail: { lang: chosen } }));
+      }
+
+      window.checkupApplyLanguage = applyLanguage;
+      window.checkupSyncPdfLangBox = syncPdfLangBox;
+
+      function applyTheme(theme) {
+        const isDark = theme === 'dark';
+        const mode = isDark ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', mode);
+        if (document.body) {
+          document.body.setAttribute('data-theme', mode);
+        }
+        try {
+          if (localStorage.getItem('checkup_cookie_consent_v1') !== 'rejected') {
+            localStorage.setItem('checkup_theme', mode);
+          }
+        } catch (_e) {}
+        const sun = document.getElementById('icon-sun');
+        const moon = document.getElementById('icon-moon');
+        const label = document.getElementById('theme-label');
+        if (sun) sun.classList.toggle('hidden', !isDark);
+        if (moon) moon.classList.toggle('hidden', isDark);
+        if (label) label.textContent = isDark ? 'Dark' : 'Light';
+      }
+
+      const langSelect = document.getElementById('lang-selector');
+      if (langSelect) langSelect.addEventListener('change', function () { applyLanguage(langSelect.value); });
+
+      const themeBtn = document.getElementById('theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function () {
+          applyTheme(document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark');
+        });
+      }
+
+      const pixKey = '{{ pix_key }}';
+      const copyPixBtn = document.getElementById('btn-copy-pix');
+      if (copyPixBtn) {
+        copyPixBtn.addEventListener('click', function () {
+          const doneMsg = document.getElementById('pix-copied-msg');
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pixKey).catch(function () {});
+          if (doneMsg) {
+            doneMsg.classList.remove('hidden');
+            setTimeout(function () { doneMsg.classList.add('hidden'); }, 2000);
+          }
+        });
+      }
+
+      const supportModal = document.getElementById('support-donation-modal');
+      const headerSupportBtn = document.getElementById('btn-header-support');
+      const supportCloseBtn = document.getElementById('support-modal-close');
+      const supportDoneBtn = document.getElementById('support-modal-done');
+      const modalCopyPixBtn = document.getElementById('btn-modal-copy-pix');
+
+      function openSupportModal() {
+        if (!supportModal) return;
+        supportModal.classList.remove('hidden');
+        supportModal.classList.add('flex');
+      }
+
+      function hideSupportModal() {
+        if (!supportModal) return;
+        supportModal.classList.add('hidden');
+        supportModal.classList.remove('flex');
+      }
+
+      if (headerSupportBtn) headerSupportBtn.addEventListener('click', openSupportModal);
+      if (supportCloseBtn) supportCloseBtn.addEventListener('click', hideSupportModal);
+      if (supportDoneBtn) supportDoneBtn.addEventListener('click', hideSupportModal);
+      if (supportModal) {
+        supportModal.addEventListener('click', function (ev) {
+          if (ev.target === supportModal) hideSupportModal();
+        });
+      }
+      if (modalCopyPixBtn) {
+        modalCopyPixBtn.addEventListener('click', function () {
+          const doneMsg = document.getElementById('modal-pix-copied-msg');
+          if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(pixKey).catch(function () {});
+          if (doneMsg) {
+            doneMsg.classList.remove('hidden');
+            setTimeout(function () { doneMsg.classList.add('hidden'); }, 2000);
+          }
+        });
+      }
+
+      let pendingExportCallback = null;
+      const modal = document.getElementById('paywall-modal');
+      const closeBtn = document.getElementById('paywall-close');
+      const cancelBtn = document.getElementById('paywall-cancel');
+      const continueBtn = document.getElementById('paywall-continue');
+      const emailInput = document.getElementById('paywall-email-input');
+      const emailErr = document.getElementById('paywall-email-error');
+
+      window.requestPaidReportAction = function (callback) {
+        pendingExportCallback = callback;
+        if (emailErr) { emailErr.classList.add('hidden'); emailErr.textContent = ''; }
+        const curLang = window.__checkupLang === 'en' ? 'en' : 'pt';
+        const radioToSelect = document.querySelector('input[name="modal_report_lang"][value="' + curLang + '"]');
+        if (radioToSelect) radioToSelect.checked = true;
+        if (!modal) { if (typeof callback === 'function') callback('', curLang); return; }
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        if (emailInput) emailInput.focus();
+      };
+
+      function hidePaywallModal() {
+        if (!modal) return;
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+
+      if (closeBtn) closeBtn.addEventListener('click', hidePaywallModal);
+      if (cancelBtn) cancelBtn.addEventListener('click', hidePaywallModal);
+      if (modal) {
+        modal.addEventListener('click', function (ev) {
+          if (ev.target === modal) hidePaywallModal();
+        });
+      }
+      document.addEventListener('keydown', function (ev) {
+        if (ev.key === 'Escape') {
+          if (supportModal && !supportModal.classList.contains('hidden')) hideSupportModal();
+          if (modal && !modal.classList.contains('hidden')) hidePaywallModal();
+        }
+      });
+      if (continueBtn) {
+        continueBtn.addEventListener('click', function () {
+          const addr = emailInput ? emailInput.value.trim() : '';
+          const curLang = window.__checkupLang === 'en' ? 'en' : 'pt';
+          if (!addr || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(addr)) {
+            if (emailErr) {
+              emailErr.textContent = I18N[curLang].invalid_email;
+              emailErr.classList.remove('hidden');
+            }
+            return;
+          }
+          const checkedRadio = document.querySelector('input[name="modal_report_lang"]:checked');
+          const chosenReportLang = checkedRadio ? checkedRadio.value : curLang;
+          const cb = pendingExportCallback;
+          pendingExportCallback = null;
+          hidePaywallModal();
+          if (typeof cb === 'function') cb(addr, chosenReportLang);
+        });
+      }
+
+      let initialTheme = 'light';
+      let initialLang = 'pt';
+      try {
+        if (localStorage.getItem('checkup_theme') === 'dark') initialTheme = 'dark';
+        if (localStorage.getItem('checkup_lang') === 'en') initialLang = 'en';
+      } catch (_e) {}
+      applyTheme(initialTheme);
+      applyLanguage(initialLang);
+    })();
+  </script>
+<script id="checkup-global-report-i18n">
+(function () {
+  const EXACT_PHRASES = [
+    ["Elementos focáveis ocultos com aria-hidden='true'", "Focusable elements hidden with aria-hidden='true'"],
+    ["Um usuário de teclado pode focar um controle que foi marcado como invisível para leitores de tela.", "A keyboard user can focus a control marked as hidden from screen readers."],
+    ["Aplique tabindex='-1' ou remova aria-hidden='true' de contêineres com controles interativos.", "Apply tabindex='-1' or remove aria-hidden='true' from containers with interactive controls."],
+    ["Campos de formulário sem rótulo", "Form fields without labels"],
+    ["O visitante não sabe o que preencher em cada campo.", "Visitors do not know what to enter in each field."],
+    ["Associe um <label for=\"id\"> ao campo ou use aria-label.", "Associate a <label for=\"id\"> with the field or use aria-label."],
+    ["URL canônica ausente (link rel='canonical')", "Missing canonical URL (link rel='canonical')"],
+    ["Sem canonical, variações de URL com parâmetros podem diluir a indexação nos buscadores.", "Without canonical, URL variations with query parameters can dilute search engine indexing."],
+    ["Adicione <link rel=\"canonical\" href=\"...\"> apontando para a URL principal.", "Add <link rel=\"canonical\" href=\"...\"> pointing to the main URL."],
+    ["Página sem título principal (h1)", "Page missing main heading (h1)"],
+    ["O h1 mostra sobre o que é a página, para visitantes e buscadores.", "The h1 shows what the page is about for visitors and search engines."],
+    ["Inclua um único <h1> com o assunto principal.", "Include a single <h1> with the main topic."],
+    ["Bloqueio de Rastreamento em robots.txt: A diretiva Disallow: / bloqueia rastreadores na raiz do domínio, podendo impedir a indexação e descoberta orgânica do site.", "robots.txt Crawl Block: The Disallow: / directive blocks crawlers at the domain root, which can prevent indexing and organic discovery of the site."],
+    ["Revisar as regras de /robots.txt para liberar as áreas públicas desejadas.", "Review /robots.txt rules to allow desired public areas."],
+    ["Pontuação geral (0 a 100)", "Overall score (0 to 100)"],
+    ["Boa forma geral", "Good overall shape"],
+    ["Atenção necessária", "Needs attention"],
+    ["Crítico — exige ajustes", "Critical — requires fixes"],
+    ["Nenhum problema encontrado nas verificações automáticas.", "No issues found in automated checks."],
+    ["Clique em um card de prioridade abaixo para abrir diretamente a lista do que precisa ser corrigido.", "Click a priority card below to jump straight to the list of items to fix."],
+    ["Tempo resposta", "Response time"],
+    ["Prioridade alta", "High priority"],
+    ["Prioridade média", "Medium priority"],
+    ["Prioridade baixa", "Low priority"],
+    ["Ver lista →", "View list →"],
+    ["O que corrigir", "What to fix"],
+    ["Como corrigir:", "How to fix:"],
+    ["Local:", "Location:"],
+    ["Nenhum problema encontrado para este filtro.", "No issues found for this filter."],
+    ["Arquivos completos da auditoria (JSON + PDF Técnico)", "Complete audit files (JSON + Technical PDF)"],
+    ["Inclui métricas, serviços extras, resumo geral técnico e recomendações", "Includes metrics, extra checks, general technical summary, and recommendations"],
+    ["Baixe agora os arquivos completos FREE", "Download full files now for FREE"],
+    ["Baixar JSON", "Download JSON"],
+    ["Imprimir / PDF", "Print / PDF"],
+    ["Relatório da análise", "Audit report"],
+    ["Resultado da verificação", "Verification result"],
+    ["Abrir site ↗", "Open site ↗"],
+    ["Certificado SSL / TLS", "SSL / TLS Certificate"],
+    ["Certificado SSL / TLS:", "SSL / TLS Certificate:"],
+    ["SEM HTTPS", "NO HTTPS"],
+    ["Sem HTTPS", "No HTTPS"],
+    ["VÁLIDO", "VALID"],
+    ["Válido", "Valid"],
+    ["INVÁLIDO / EXPIRADO", "INVALID / EXPIRED"],
+    ["Inválido / Expirado", "Invalid / Expired"],
+    ["NÃO VERIFICADO", "UNVERIFIED"],
+    ["Não verificado", "Unverified"],
+    ["Validade:", "Validity:"],
+    ["Expira em:", "Expires on:"],
+    ["Protocolo / Emissor:", "Protocol / Issuer:"],
+    ["Linguagens, Frameworks e Bibliotecas", "Languages, Frameworks & Libraries"],
+    ["assinaturas públicas", "public signatures"],
+    ["Linguagens:", "Languages:"],
+    ["Frameworks / CMS:", "Frameworks / CMS:"],
+    ["Bibliotecas / UI:", "Libraries / UI:"],
+    ["Servidor / CDN:", "Server / CDN:"],
+    ["Frameworks:", "Frameworks:"],
+    ["Bibliotecas:", "Libraries:"],
+    ["Stack detectada:", "Detected stack:"],
+    ["Resumo de Prioridades:", "Priority Summary:"],
+    ["Não identificado", "Not detected"],
+    ["Detecção indicativa por assinaturas públicas (cabeçalhos HTTP, HTML e DOM); sites podem ocultar ou ofuscar tecnologias.", "Indicative detection based on public signatures (HTTP headers, HTML, and DOM); sites may hide or obfuscate technologies."],
+    ["checkUp — Laudo Técnico de Auditoria Web", "checkUp — Technical Web Audit Report"],
+    ["Relatório Técnico de Infraestrutura, Acessibilidade e Qualidade", "Technical Report on Infrastructure, Accessibility, and Quality"],
+    ["Não Conformidades Identificadas por Ordem de Prioridade", "Findings by Priority Level"],
+    ["PRIORIDADE ALTA (CRÍTICO)", "HIGH PRIORITY (CRITICAL)"],
+    ["PRIORIDADE MÉDIA (MODERADO)", "MEDIUM PRIORITY (MODERATE)"],
+    ["PRIORIDADE BAIXA (MELHORIA)", "LOW PRIORITY (IMPROVEMENT)"],
+    ["Resumo Geral Técnico — Riscos e Fatores que Podem Incapacitar ou Comprometer o Site", "General Technical Summary — Risks and Factors That Can Impair or Compromise the Site"],
+    ["Diagnóstico Consolidado:", "Consolidated Diagnosis:"],
+    ["Diagnóstico:", "Diagnosis:"],
+    ["Ação corretiva:", "Corrective action:"],
+    ["Documento técnico gerado automaticamente pelo checkUp. Recomenda-se validação complementar com leitores de tela e revisão humana.", "Technical document automatically generated by checkUp. Complementary validation with screen readers and human review is recommended."],
+    ["Contraste de cores insuficiente", "Insufficient color contrast"],
+    ["Texto com pouco contraste em relação ao fundo é difícil de ler para muita gente, inclusive em telas com muito brilho.", "Low-contrast text against the background is hard to read for many users, especially on bright screens."],
+    ["Use cores com contraste de pelo menos 4,5:1 para textos normais e 3:1 para textos grandes.", "Use colors with at least a 4.5:1 contrast ratio for normal text and 3:1 for large text."],
+    ["Em telas pequenas, parte do conteúdo fica fora da tela e obriga a rolar para o lado.", "On small screens, part of the content overflows horizontally and forces sideways scrolling."],
+    ["Ajuste elementos com largura fixa e use larguras relativas ou responsivas.", "Adjust fixed-width elements and use relative or responsive widths."],
+    ["Múltiplas falhas simultâneas em requisições da página", "Multiple simultaneous failures in page requests"],
+    ["Várias chamadas falharam durante o carregamento, elevando o risco de telas incompletas ou componentes quebrados.", "Several network calls failed during load, increasing the risk of incomplete screens or broken components."],
+    ["Audite falhas de rede, timeouts, bloqueios CORS e endpoints indisponíveis.", "Audit network failures, timeouts, CORS blocks, and unavailable endpoints."],
+    ["robots.txt bloqueia o acesso geral ao site (Disallow: /)", "robots.txt blocks general site access (Disallow: /)"],
+    ["A regra Disallow: / impede rastreadores de indexar o site ou partes críticas dele.", "The Disallow: / rule prevents crawlers from indexing the site or critical sections of it."],
+    ["Revise /robots.txt para não bloquear rotas públicas importantes sem intenção.", "Review /robots.txt so important public routes are not unintentionally blocked."],
+    ["Quem não enxerga a imagem não sabe o que ela mostra, e o Google também não.", "Users who cannot see the image do not know what it depicts, and search engines cannot index it properly."],
+    ["Adicione alt=\"descrição curta\" ou alt=\"\" se a imagem for só decorativa.", "Add alt=\"short description\" or alt=\"\" if the image is purely decorative."],
+    ["O visitante não consegue ampliar a página para ler melhor.", "Visitors cannot zoom in on the page to read more comfortably."],
+    ["Remova user-scalable=no e maximum-scale da meta viewport.", "Remove user-scalable=no and maximum-scale from the viewport meta tag."],
+    ["Cabeçalhos HTTP de segurança ajudam a proteger o site e os visitantes contra ataques comuns no navegador.", "HTTP security headers help protect the site and visitors against common browser-based attacks."],
+    ["Configure os cabeçalhos ausentes no servidor web ou proxy reverso (Nginx, Apache, Cloudflare, etc.).", "Configure the missing headers on your web server or reverse proxy (Nginx, Apache, Cloudflare, etc.)."],
+    ["Entregue o conteúdo principal no HTML inicial, ou use renderização no servidor para as partes essenciais.", "Deliver primary content in the initial HTML or use server-side rendering for essential sections."],
+    ["Recursos externos ou chamadas da página retornaram erro HTTP (4xx/5xx) ou falharam na rede.", "External resources or page requests returned HTTP errors (4xx/5xx) or failed on the network."],
+    ["Inspecione a aba Rede do navegador (F12) e corrija URLs, permissões (CORS) ou endpoints instáveis.", "Inspect the browser Network tab (F12) and fix broken URLs, CORS permissions, or unstable endpoints."],
+    ["Erros de script podem impedir funções como menus, formulários e botões.", "Script errors can break interactive features such as menus, forms, and buttons."],
+    ["Abra o console do navegador (F12), corrija os erros e teste as funções da página.", "Open the browser console (F12), fix the errors, and test page interactions."],
+    ["Vídeos e mapas incorporados ficam sem descrição.", "Embedded videos and maps lack an accessible description."],
+    ["Adicione title=\"descrição\" no iframe.", "Add title=\"description\" to the iframe element."],
+    ["Expor linguagem ou framework no cabeçalho facilita reconhecimento automatizado da stack.", "Exposing the server language or framework in headers facilitates automated stack fingerprinting."],
+    ["Remova ou oculte o cabeçalho X-Powered-By na aplicação ou proxy reverso.", "Remove or hide the X-Powered-By header in your application or reverse proxy."],
+    ["Cookies sem Secure, HttpOnly ou SameSite ficam mais expostos a roubo via script ou envio cruzado entre sites.", "Cookies without Secure, HttpOnly, or SameSite are more exposed to script theft or cross-site request forgery."],
+    ["Configure HttpOnly, Secure (em HTTPS) e SameSite=Lax ou Strict nos cookies emitidos pelo servidor.", "Set HttpOnly, Secure (over HTTPS), and SameSite=Lax or Strict on cookies issued by the server."],
+    ["Scripts externos no <head> sem defer, async ou type='module' podem atrasar a renderização inicial.", "External scripts in <head> without defer, async, or type='module' can delay initial rendering."],
+    ["Adicione defer ou async nos scripts não críticos ou mova para o final do <body>.", "Add defer or async to non-critical scripts or move them to the end of <body>."],
+    ["Cabeçalho Permissions-Policy ausente", "Missing Permissions-Policy header"],
+    ["Restringe acesso a câmera, microfone, geolocalização e APIs sensíveis do navegador.", "Restricts access to camera, microphone, geolocation, and sensitive browser APIs."],
+    ["Adicione o cabeçalho Permissions-Policy na configuração do servidor/CDN.", "Add the Permissions-Policy header in your server/CDN configuration."],
+    ["Cabeçalho Cross-Origin-Opener-Policy (COOP) ausente", "Missing Cross-Origin-Opener-Policy (COOP) header"],
+    ["Isola o contexto de navegação contra ataques cross-origin (como Spectre/XS-Leaks).", "Isolates the browsing context against cross-origin attacks (such as Spectre/XS-Leaks)."],
+    ["Adicione o cabeçalho Cross-Origin-Opener-Policy (COOP) na configuração do servidor/CDN.", "Add the Cross-Origin-Opener-Policy (COOP) header in your server/CDN configuration."],
+    ["Cabeçalho Cross-Origin-Resource-Policy (CORP) ausente", "Missing Cross-Origin-Resource-Policy (CORP) header"],
+    ["Define quais origens podem carregar este recurso em contextos cross-origin.", "Defines which origins are allowed to load this resource in cross-origin contexts."],
+    ["Adicione o cabeçalho Cross-Origin-Resource-Policy (CORP) na configuração do servidor/CDN.", "Add the Cross-Origin-Resource-Policy (CORP) header in your server/CDN configuration."],
+    ["Marcos semânticos (landmarks) ausentes na página", "Missing semantic landmarks on page"],
+    ["Landmarks estruturais ajudam usuários de leitores de tela a navegar rapidamente entre topo, conteúdo principal e rodapé.", "Structural landmarks help screen reader users quickly navigate between header, main content, and footer."],
+    ["Organize a página com <header>, <main> e 
 
   <script>
     (function () {
@@ -960,7 +1759,6 @@
       </div>
     </div>
   </div>
-
 
 <script>
 (function () {

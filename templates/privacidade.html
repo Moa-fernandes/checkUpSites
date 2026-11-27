@@ -1,252 +1,188 @@
 {% extends "base.html" %}
 
-
-
-
-
 {% block title %}Política de privacidade — checkUp{% endblock %}
 
-
-{% block description %}Como o checkUp coleta, usa e protege seus dados.{% endblock %}
-
-
-
-
-
 {% block content %}
-
-
-<a href="/"
-  class="inline-flex min-h-[44px] items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 focus:outline-none focus:ring-2 focus:ring-indigo-600">
-
-
-  ← Voltar ao início
-
-
-</a>
-
-
-
-
-
-<div class="mt-4 rounded-3xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-
-
-  <h1 class="text-3xl font-extrabold tracking-tight text-slate-900">Política de privacidade</h1>
-
-
-  <p class="mt-2 font-mono text-xs text-slate-500">Última atualização: {{ updated }}</p>
-
-
-
-
-
-  <div class="mt-8 space-y-8 text-sm leading-relaxed text-slate-700 sm:text-base">
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">1. Quem é responsável pelos dados</h2>
-
-
-      <p class="mt-2">
-
-
-        O checkUp é operado por {{ owner }}. Para dúvidas sobre esta política ou sobre
-
-
-        seus dados, escreva para {{ contact }}.
-
-
-      </p>
-
-
-    </section>
-
-
-
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">2. Quais dados coletamos</h2>
-
-
-      <ul class="mt-2 list-disc space-y-2 pl-6">
-
-
-        <li><strong>E-mail</strong>, somente se você preencher o formulário "Quero ser avisado".</li>
-
-
-        <li><strong>Um identificador aleatório</strong>, guardado em um cookie no seu navegador, usado para contar
-          visitantes únicos. Ele não contém seu nome nem outros dados pessoais.</li>
-
-
-        <li><strong>Contagem anônima de acessos</strong>, sem associação a pessoas.</li>
-
-
-      </ul>
-
-
-    </section>
-
-
-
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">3. O que não guardamos</h2>
-
-
-      <p class="mt-2">
-
-
-        Não usamos ferramentas de publicidade e não vendemos dados. Os últimos resumos
-
-
-        técnicos por URL podem ficar salvos localmente no histórico para comparação entre
-
-
-        verificações.
-
-
-      </p>
-
-
-    </section>
-
-
-
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">4. Para que usamos os dados</h2>
-
-
-      <ul class="mt-2 list-disc space-y-2 pl-6">
-
-
-        <li>Enviar avisos sobre novidades, somente para quem pediu.</li>
-
-
-        <li>Medir quantas pessoas usam o serviço e comparar evolução de sites verificados.</li>
-
-
-        <li>Manter o site funcionando e corrigir erros.</li>
-
-
-      </ul>
-
-
-    </section>
-
-
-
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">5. Cookies</h2>
-
-
-      <p class="mt-2">
-
-
-        Usamos apenas o cookie técnico descrito acima, que dura até dois anos. Você pode
-
-
-        apagá-lo pelas configurações do navegador a qualquer momento.
-
-
-      </p>
-
-
-    </section>
-
-
-
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">6. Por quanto tempo guardamos</h2>
-
-
-      <p class="mt-2">
-
-
-        Os e-mails são mantidos enquanto você quiser receber novidades. Os contadores são
-
-
-        anônimos e não se referem a pessoas identificadas.
-
-
-      </p>
-
-
-    </section>
-
-
-
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">7. Seus direitos</h2>
-
-
-      <p class="mt-2">
-
-
-        Pela Lei Geral de Proteção de Dados (LGPD), você pode pedir para ver, corrigir ou
-
-
-        excluir seus dados e pode cancelar o recebimento de novidades a qualquer momento.
-
-
-        Para isso, escreva para {{ contact }}.
-
-
-      </p>
-
-
-    </section>
-
-
-
-
-
-    <section>
-
-
-      <h2 class="text-lg font-bold text-slate-900 sm:text-xl">8. Alterações</h2>
-
-
-      <p class="mt-2">
-
-
-        Se esta política mudar, a data no topo desta página será atualizada.
-
-
-      </p>
-
-
-    </section>
-
-
+<div id="conteudo" class="mx-auto max-w-3xl space-y-6 py-6">
+  <div>
+    <a href="/" class="inline-flex items-center gap-1.5 text-sm font-semibold text-indigo-700 hover:underline">
+      &larr; Voltar ao início
+    </a>
   </div>
 
+  <div class="space-y-2">
+    <h1 class="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">Política de privacidade</h1>
+    <p class="text-xs font-medium text-slate-500">Última atualização: {{ updated_at }}</p>
+  </div>
 
+  <div class="space-y-5 rounded-3xl border border-slate-200 bg-white p-6 text-sm leading-relaxed text-slate-700 shadow-xs">
+    <section class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">1. Quem é responsável pelos dados</h2>
+      <p>O checkUp é operado por {{ owner }}. Para dúvidas sobre esta política ou sobre seus dados, escreva para {{ contact }}.</p>
+    </section>
+
+    <section id="cookies" class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">2. Quais dados coletamos</h2>
+      <ul class="list-disc space-y-1.5 pl-5">
+        <li><strong>E-mail</strong>, somente se você preencher o formulário "Quero ser avisado".</li>
+        <li><strong>Um identificador aleatório</strong>, guardado em um cookie no seu navegador, usado para contar visitantes únicos. Ele não contém seu nome nem outros dados pessoais.</li>
+        <li><strong>Contagem anônima de acessos</strong>, sem associação a pessoas.</li>
+      </ul>
+    </section>
+
+    <section class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">3. O que não guardamos</h2>
+      <p>Não usamos ferramentas de publicidade e não vendemos dados. Os últimos resumos técnicos por URL podem ficar salvos localmente no histórico para comparação entre verificações.</p>
+    </section>
+
+    <section class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">4. Para que usamos os dados</h2>
+      <ul class="list-disc space-y-1.5 pl-5">
+        <li>Enviar avisos sobre novidades, somente para quem pediu.</li>
+        <li>Medir quantas pessoas usam o serviço e comparar evolução de sites verificados.</li>
+        <li>Manter o site funcionando e corrigir erros.</li>
+      </ul>
+    </section>
+
+    <section class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">5. Cookies</h2>
+      <p>Usamos cookies técnicos essenciais e preferências de consentimento. Você pode aceitar, rejeitar ou apagar cookies nas configurações do navegador a qualquer momento.</p>
+    </section>
+
+    <section class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">6. Por quanto tempo guardamos</h2>
+      <p>Os e-mails são mantidos enquanto você quiser receber novidades. Os contadores são anônimos e não se referem a pessoas identificadas.</p>
+    </section>
+
+    <section class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">7. Seus direitos</h2>
+      <p>Pela Lei Geral de Proteção de Dados (LGPD), você pode pedir para ver, corrigir ou excluir seus dados e pode cancelar o recebimento de novidades a qualquer momento. Para isso, escreva para {{ contact }}.</p>
+    </section>
+
+    <section class="space-y-2">
+      <h2 class="text-base font-bold text-slate-900">8. Alterações</h2>
+      <p>Se esta política mudar, a data no topo desta página será atualizada.</p>
+    </section>
+  </div>
 </div>
 
+<script>
+(function () {
+  var OWNER = {{ (owner or '') | tojson }};
+  var CONTACT = {{ (contact or '') | tojson }};
+  var UPDATED_AT = {{ (updated_at or '') | tojson }};
 
+  function currentLang() {
+    if (window.__checkupLang === 'en' || window.__checkupLang === 'pt') {
+      return window.__checkupLang;
+    }
+    try {
+      var ls = (localStorage.getItem('checkup_lang') || '').toLowerCase();
+      if (ls === 'en' || ls === 'pt') return ls;
+    } catch (_e) {}
+    var dl = (document.documentElement.lang || '').toLowerCase();
+    return dl.indexOf('en') === 0 ? 'en' : 'pt';
+  }
+
+  function applyLang() {
+    var isEn = currentLang() === 'en';
+    var root = document.getElementById('conteudo');
+    if (!root) return;
+
+    document.title = isEn ? 'Privacy Policy — checkUp' : 'Política de privacidade — checkUp';
+
+    var backLink = root.querySelector('a[href="/"]');
+    if (backLink) {
+      backLink.innerHTML = isEn ? '&larr; Back to home' : '&larr; Voltar ao início';
+    }
+
+    var h1 = root.querySelector('h1');
+    if (h1) {
+      h1.textContent = isEn ? 'Privacy Policy' : 'Política de privacidade';
+    }
+
+    var updatedP = h1 ? h1.nextElementSibling : null;
+    if (updatedP) {
+      updatedP.textContent = (isEn ? 'Last updated: ' : 'Última atualização: ') + UPDATED_AT;
+    }
+
+    var sections = root.querySelectorAll('section');
+    if (sections[0]) {
+      sections[0].querySelector('h2').textContent = isEn ? '1. Who is responsible for the data' : '1. Quem é responsável pelos dados';
+      sections[0].querySelector('p').textContent = isEn
+        ? 'checkUp is operated by ' + OWNER + '. For questions about this policy or your data, write to ' + CONTACT + '.'
+        : 'O checkUp é operado por ' + OWNER + '. Para dúvidas sobre esta política ou sobre seus dados, escreva para ' + CONTACT + '.';
+    }
+    if (sections[1]) {
+      sections[1].querySelector('h2').textContent = isEn ? '2. What data we collect' : '2. Quais dados coletamos';
+      var lis1 = sections[1].querySelectorAll('li');
+      if (lis1[0]) lis1[0].innerHTML = isEn
+        ? '<strong>Email</strong>, only if you submit the "Notify me" form.'
+        : '<strong>E-mail</strong>, somente se você preencher o formulário "Quero ser avisado".';
+      if (lis1[1]) lis1[1].innerHTML = isEn
+        ? '<strong>A random identifier</strong>, stored in a browser cookie, used to count unique visitors. It contains no name or personal data.'
+        : '<strong>Um identificador aleatório</strong>, guardado em um cookie no seu navegador, usado para contar visitantes únicos. Ele não contém seu nome nem outros dados pessoais.';
+      if (lis1[2]) lis1[2].innerHTML = isEn
+        ? '<strong>Anonymous access count</strong>, not linked to individuals.'
+        : '<strong>Contagem anônima de acessos</strong>, sem associação a pessoas.';
+    }
+    if (sections[2]) {
+      sections[2].querySelector('h2').textContent = isEn ? '3. What we do not store' : '3. O que não guardamos';
+      sections[2].querySelector('p').textContent = isEn
+        ? 'We do not use advertising tools and we do not sell data. Recent technical summaries per URL may be saved locally in history to compare checks.'
+        : 'Não usamos ferramentas de publicidade e não vendemos dados. Os últimos resumos técnicos por URL podem ficar salvos localmente no histórico para comparação entre verificações.';
+    }
+    if (sections[3]) {
+      sections[3].querySelector('h2').textContent = isEn ? '4. How we use data' : '4. Para que usamos os dados';
+      var lis3 = sections[3].querySelectorAll('li');
+      if (lis3[0]) lis3[0].textContent = isEn
+        ? 'Send update notifications, only to those who requested them.'
+        : 'Enviar avisos sobre novidades, somente para quem pediu.';
+      if (lis3[1]) lis3[1].textContent = isEn
+        ? 'Measure how many people use the service and compare progress across checked sites.'
+        : 'Medir quantas pessoas usam o serviço e comparar evolução de sites verificados.';
+      if (lis3[2]) lis3[2].textContent = isEn
+        ? 'Keep the site running and fix errors.'
+        : 'Manter o site funcionando e corrigir erros.';
+    }
+    if (sections[4]) {
+      sections[4].querySelector('h2').textContent = isEn ? '5. Cookies' : '5. Cookies';
+      sections[4].querySelector('p').textContent = isEn
+        ? 'We use essential technical cookies and optional consent preferences. You can accept, reject, or clear cookies in your browser settings at any time.'
+        : 'Usamos cookies técnicos essenciais e preferências de consentimento. Você pode aceitar, rejeitar ou apagar cookies nas configurações do navegador a qualquer momento.';
+    }
+    if (sections[5]) {
+      sections[5].querySelector('h2').textContent = isEn ? '6. How long we keep data' : '6. Por quanto tempo guardamos';
+      sections[5].querySelector('p').textContent = isEn
+        ? 'Emails are kept while you wish to receive updates. Counters are anonymous and do not identify individuals.'
+        : 'Os e-mails são mantidos enquanto você quiser receber novidades. Os contadores são anônimos e não se referem a pessoas identificadas.';
+    }
+    if (sections[6]) {
+      sections[6].querySelector('h2').textContent = isEn ? '7. Your rights' : '7. Seus direitos';
+      sections[6].querySelector('p').textContent = isEn
+        ? "Under Brazil's General Data Protection Law (LGPD), you can request to view, correct, or delete your data and opt out of updates at any time. To do so, write to " + CONTACT + '.'
+        : 'Pela Lei Geral de Proteção de Dados (LGPD), você pode pedir para ver, corrigir ou excluir seus dados e pode cancelar o recebimento de novidades a qualquer momento. Para isso, escreva para ' + CONTACT + '.';
+    }
+    if (sections[7]) {
+      sections[7].querySelector('h2').textContent = isEn ? '8. Changes' : '8. Alterações';
+      sections[7].querySelector('p').textContent = isEn
+        ? 'If this policy changes, the date at the top of this page will be updated.'
+        : 'Se esta política mudar, a data no topo desta página será atualizada.';
+    }
+  }
+
+  window.addEventListener('checkup:langchange', applyLang);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', applyLang);
+  } else {
+    applyLang();
+  }
+
+  window.addEventListener('load', function () {
+    applyLang();
+    setTimeout(applyLang, 150);
+    setTimeout(applyLang, 500);
+  });
+})();
+</script>
 {% endblock %}
