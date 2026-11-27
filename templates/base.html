@@ -955,9 +955,8 @@
   </script>
 
   <!-- Banner de Consentimento de Cookies (Aceitar / Rejeitar) -->
-  <div id="cookie-consent-banner" role="dialog" aria-modal="false" aria-labelledby="cookie-consent-title"
-    class="no-print fixed inset-x-0 bottom-0 z-40 hidden px-3 pb-3 sm:px-6 sm:pb-5 lg:px-[265px]">
-    <div class="mx-auto w-full max-w-full rounded-3xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur sm:p-6">
+  <div id="cookie-consent-banner" role="dialog" aria-modal="true" aria-labelledby="cookie-consent-title" class="no-print fixed inset-0 z-50 hidden flex-col justify-end bg-slate-950/65 backdrop-blur-xs">
+    <div class="w-full border-t border-slate-200/90 bg-white/95 px-4 py-4 shadow-2xl backdrop-blur sm:px-8 sm:py-5">
       <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div class="min-w-0 flex-1 space-y-1.5">
           <div class="flex flex-wrap items-center gap-2">
@@ -970,8 +969,7 @@
             </h2>
           </div>
           <p id="cookie-consent-desc" class="text-xs leading-relaxed text-slate-600 sm:text-sm">
-            Usamos cookies técnicos essenciais para o funcionamento do site e, com seu aceite, guardamos preferências de tema, idioma e histórico local de verificações. Consulte a
-            <a id="cookie-privacy-link" href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Política de privacidade</a>.
+            Usamos cookies técnicos essenciais para o funcionamento do site e, com seu aceite, guardamos preferências de tema, idioma e histórico local de verificações. <br>Consulte a <a id="cookie-privacy-link" href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Política de privacidade</a>.
           </p>
           <p id="cookie-privacy-feedback" class="hidden font-mono text-[11px] font-semibold text-indigo-700"></p>
         </div>
@@ -1033,8 +1031,8 @@
     }
     if (descEl) {
       descEl.innerHTML = isEn
-        ? 'We use essential technical cookies for site functionality and, if accepted, store theme, language, and local audit preferences. Read our <a id="cookie-privacy-link" href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Privacy policy</a>.'
-        : 'Usamos cookies técnicos essenciais para o funcionamento do site e, com seu aceite, guardamos preferências de tema, idioma e histórico local de verificações. Consulte a <a id="cookie-privacy-link" href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Política de privacidade</a>.';
+        ? 'We use essential technical cookies for site functionality and, if accepted, store theme, language, and local audit preferences. <br>Read our <a id="cookie-privacy-link" href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Privacy policy</a>.'
+        : 'Usamos cookies técnicos essenciais para o funcionamento do site e, com seu aceite, guardamos preferências de tema, idioma e histórico local de verificações. <br>Consulte a <a id="cookie-privacy-link" href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Política de privacidade</a>.';
       const boundLink = document.getElementById('cookie-privacy-link');
       if (boundLink) {
         boundLink.onclick = handlePrivacyClick;
@@ -1059,6 +1057,7 @@
       privacyFeedback.classList.remove('hidden');
     }
     setTimeout(function () {
+      hideBanner();
       window.location.href = '/privacidade#cookies';
     }, 180);
   }
@@ -1067,11 +1066,17 @@
     if (!banner) return;
     applyConsentTexts();
     banner.classList.remove('hidden');
+    banner.classList.add('flex');
+    document.documentElement.classList.add('overflow-hidden');
+    if (document.body) document.body.classList.add('overflow-hidden');
   }
 
   function hideBanner() {
     if (!banner) return;
     banner.classList.add('hidden');
+    banner.classList.remove('flex');
+    document.documentElement.classList.remove('overflow-hidden');
+    if (document.body) document.body.classList.remove('overflow-hidden');
   }
 
   if (privacyLink) {
