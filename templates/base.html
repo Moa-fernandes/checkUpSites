@@ -925,5 +925,125 @@
   window.checkupTranslateReport = translateReportDom;
 })();
 </script>
+
+  <!-- Banner de Consentimento de Cookies (Aceitar / Rejeitar) -->
+  <div id="cookie-consent-banner" role="dialog" aria-modal="false" aria-labelledby="cookie-consent-title"
+    class="no-print fixed inset-x-0 bottom-0 z-40 hidden p-3 sm:p-5">
+    <div class="mx-auto max-w-4xl rounded-3xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur sm:p-6">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="min-w-0 flex-1 space-y-1.5">
+          <div class="flex flex-wrap items-center gap-2">
+            <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-indigo-800 ring-1 ring-inset ring-indigo-200">
+              <span class="h-2 w-2 rounded-full bg-indigo-600"></span>
+              Cookies &amp; LGPD
+            </span>
+            <h2 id="cookie-consent-title" class="text-sm font-extrabold text-slate-900 sm:text-base">
+              Sua privacidade e cookies no checkUp
+            </h2>
+          </div>
+          <p id="cookie-consent-desc" class="text-xs leading-relaxed text-slate-600 sm:text-sm">
+            Usamos cookies técnicos essenciais para o funcionamento do site e, com seu aceite, guardamos preferências de tema, idioma e histórico local de verificações. Veja a
+            <a href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Política de privacidade</a>.
+          </p>
+        </div>
+
+        <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
+          <button type="button" id="btn-cookie-reject"
+            class="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm">
+            Rejeitar
+          </button>
+          <button type="button" id="btn-cookie-accept"
+            class="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-indigo-700 px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-sm">
+            Aceitar cookies
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+<script>
+(function () {
+  const STORAGE_KEY = 'checkup_cookie_consent_v1';
+  const COOKIE_NAME = 'checkup_consent';
+  const banner = document.getElementById('cookie-consent-banner');
+  const btnAccept = document.getElementById('btn-cookie-accept');
+  const btnReject = document.getElementById('btn-cookie-reject');
+  const titleEl = document.getElementById('cookie-consent-title');
+  const descEl = document.getElementById('cookie-consent-desc');
+
+  function readConsent() {
+    try {
+      const fromLs = localStorage.getItem(STORAGE_KEY);
+      if (fromLs === 'accepted' || fromLs === 'rejected') return fromLs;
+    } catch (_e) {}
+    const match = document.cookie.match(new RegExp('(?:^|;\s*)' + COOKIE_NAME + '=(accepted|rejected)'));
+    return match ? match[1] : null;
+  }
+
+  function writeConsent(choice) {
+    window.__checkupCookieConsent = choice;
+    try {
+      localStorage.setItem(STORAGE_KEY, choice);
+      if (choice === 'rejected') {
+        localStorage.removeItem('checkup_theme');
+        localStorage.removeItem('checkup_lang');
+      }
+    } catch (_e) {}
+    const maxAge = 60 * 60 * 24 * 180;
+    document.cookie = COOKIE_NAME + '=' + choice + '; max-age=' + maxAge + '; path=/; SameSite=Lax';
+    window.dispatchEvent(new CustomEvent('checkup:consentchange', { detail: { consent: choice } }));
+  }
+
+  function applyConsentTexts() {
+    const isEn = (window.__checkupLang || '').toLowerCase().startsWith('en');
+    if (titleEl) {
+      titleEl.textContent = isEn ? 'Your privacy & cookies on checkUp' : 'Sua privacidade e cookies no checkUp';
+    }
+    if (descEl) {
+      descEl.innerHTML = isEn
+        ? 'We use essential technical cookies for site functionality and, if accepted, store theme, language, and local audit preferences. Read our <a href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Privacy policy</a>.'
+        : 'Usamos cookies técnicos essenciais para o funcionamento do site e, com seu aceite, guardamos preferências de tema, idioma e histórico local de verificações. Veja a <a href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Política de privacidade</a>.';
+    }
+    if (btnReject) btnReject.textContent = isEn ? 'Reject' : 'Rejeitar';
+    if (btnAccept) btnAccept.textContent = isEn ? 'Accept cookies' : 'Aceitar cookies';
+  }
+
+  function showBanner() {
+    if (!banner) return;
+    applyConsentTexts();
+    banner.classList.remove('hidden');
+  }
+
+  function hideBanner() {
+    if (!banner) return;
+    banner.classList.add('hidden');
+  }
+
+  if (btnAccept) {
+    btnAccept.addEventListener('click', function () {
+      writeConsent('accepted');
+      hideBanner();
+    });
+  }
+
+  if (btnReject) {
+    btnReject.addEventListener('click', function () {
+      writeConsent('rejected');
+      hideBanner();
+    });
+  }
+
+  window.checkupOpenCookieConsent = showBanner;
+  window.addEventListener('checkup:langchange', applyConsentTexts);
+
+  const existing = readConsent();
+  window.__checkupCookieConsent = existing || 'pending';
+  if (!existing) {
+    showBanner();
+  }
+})();
+</script>
+
 </body>
 </html>
