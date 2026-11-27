@@ -313,7 +313,7 @@
           const offset = header ? header.getBoundingClientRect().height + 16 : 84;
           window.scrollTo({ top: Math.max(0, sec.getBoundingClientRect().top + window.scrollY - offset), behavior: 'smooth' });
         }
-      }, 360);
+      }, 120);
     } else {
       finishHide();
     }
@@ -496,17 +496,10 @@
             }
             return;
           } else if (msg.type === 'done') {
-            const elapsedMs = performance.now() - checkStartMs;
-            const waitMs = Math.max(0, Math.ceil(20000 - elapsedMs));
-            if (waitMs > 0) {
-              setTargetPercent(95, 'Aprofundando varredura técnica e preparando síntese...');
-              const ticker = setInterval(function () {
-                const ratio = Math.min(1, (performance.now() - checkStartMs) / 20000);
-                setTargetPercent(Math.min(99, Math.max(targetPercent, ratio * 99)), 'Executando checagens complementares...');
-              }, 250);
-              await new Promise(function (resolve) { setTimeout(resolve, waitMs); });
-              clearInterval(ticker);
-            }
+            setTargetPercent(98, 'Concluindo an?lise e preparando resultado...');
+            currentPercent = Math.max(currentPercent, 98);
+            targetPercent = 98;
+            renderVisualProgress(98);
             if (resultContainer) {
               resultContainer.innerHTML = msg.html || '';
               bindReportEvents();
@@ -517,6 +510,9 @@
                 window.applyFullReportTranslation(getLang());
               }
             }
+            currentPercent = 100;
+            targetPercent = 100;
+            renderVisualProgress(100);
             closeOverlay(true);
             return;
           }

@@ -70,15 +70,15 @@
 
   <header class="no-print sticky top-0 z-30 border-b border-slate-200/80 bg-white/90 backdrop-blur">
     <nav class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6" aria-label="Principal">
-      <a href="/" class="group inline-flex min-h-[44px] items-center gap-3 rounded-lg pr-2 text-lg font-extrabold tracking-tight text-slate-900 focus:outline-none focus:ring-2 focus:ring-indigo-600">
-        <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" class="h-9 w-9 rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105">
-        <span>check<span class="text-indigo-700">Up</span></span>
+      <a href="/" class="group inline-flex min-h-[44px] shrink-0 items-center gap-2 rounded-lg pr-1 text-base font-extrabold tracking-tight text-slate-900 sm:gap-3 sm:pr-2 sm:text-lg focus:outline-none focus:ring-2 focus:ring-indigo-600">
+        <img src="{{ url_for('static', filename='favicon.svg') }}" alt="" class="h-8 w-8 shrink-0 rounded-xl shadow-sm transition-transform duration-200 group-hover:scale-105 sm:h-9 sm:w-9">
+        <span class="whitespace-nowrap">check<span class="text-indigo-700">Up</span></span>
       </a>
 
       <div class="flex items-center gap-2">
         <button type="button" id="btn-header-support" data-i18n="header_support_btn"
-          class="inline-flex min-h-[40px] items-center gap-1.5 rounded-xl border border-indigo-200 bg-indigo-50/80 px-3 py-1.5 text-xs font-bold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 focus:outline-none focus:ring-2 focus:ring-indigo-600">
-          <svg class="h-4 w-4 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          class="inline-flex min-h-[38px] shrink-0 items-center gap-1 whitespace-nowrap rounded-xl border border-indigo-200 bg-indigo-50/80 px-2.5 py-1.5 text-[11px] font-bold text-indigo-800 transition hover:border-indigo-300 hover:bg-indigo-100 sm:min-h-[40px] sm:gap-1.5 sm:px-3 sm:text-xs focus:outline-none focus:ring-2 focus:ring-indigo-600">
+          <svg class="h-3.5 w-3.5 shrink-0 text-indigo-700 sm:h-4 sm:w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"></path>
           </svg>
           <span>Suporte ao projeto</span>
@@ -103,7 +103,7 @@
           <svg id="icon-moon" class="h-4 w-4 text-indigo-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
           </svg>
-          <span id="theme-label">Bright</span>
+          <span id="theme-label">Light</span>
         </button>
 
         <a href="/privacidade" data-i18n="privacy_link"
@@ -336,7 +336,7 @@
           invalid_email: 'Informe um e-mail válido para receber o relatório.',
           cancel_btn: 'Cancelar',
           continue_send_btn: 'Confirmar e gerar / enviar',
-          paid_cta_label: 'Baixe agora os arquivos completos por R$5,99',
+          paid_cta_label: 'Baixe agora os arquivos completos FREE',
           btn_download_json: 'Baixar JSON',
           btn_print_pdf: 'Imprimir / PDF',
           report_eyebrow: 'Relatório da análise',
@@ -437,7 +437,7 @@
         const label = document.getElementById('theme-label');
         if (sun) sun.classList.toggle('hidden', !isDark);
         if (moon) moon.classList.toggle('hidden', isDark);
-        if (label) label.textContent = isDark ? 'Dark' : 'Bright';
+        if (label) label.textContent = isDark ? 'Dark' : 'Light';
       }
 
       const langSelect = document.getElementById('lang-selector');
@@ -603,7 +603,7 @@
     ["Nenhum problema encontrado para este filtro.", "No issues found for this filter."],
     ["Arquivos completos da auditoria (JSON + PDF Técnico)", "Complete audit files (JSON + Technical PDF)"],
     ["Inclui métricas, serviços extras, resumo geral técnico e recomendações", "Includes metrics, extra checks, general technical summary, and recommendations"],
-    ["Baixe agora os arquivos completos por R$5,99", "Download full files now for R$5.99"],
+    ["Baixe agora os arquivos completos FREE", "Download full files now for FREE"],
     ["Baixar JSON", "Download JSON"],
     ["Imprimir / PDF", "Print / PDF"],
     ["Relatório da análise", "Audit report"],

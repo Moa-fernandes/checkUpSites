@@ -149,14 +149,36 @@
           <span id="stack-card-badge" class="font-mono text-[10px] text-slate-500">assinaturas públicas</span>
         </div>
 
+        {% set layers = ts.get("languages_by_layer") or {} %}
         <div class="mt-2.5 grid gap-2.5 text-xs text-slate-700 sm:grid-cols-2">
-          <div>
-            <span id="stack-lbl-lang" class="font-semibold text-slate-500">Linguagens:</span>
-            {% if ts.get("languages") %}
-              <strong class="text-slate-900">{{ ts.get("languages") | join(", ") }}</strong>
-            {% else %}
-              <span class="js-not-identified text-slate-500">Não identificado</span>
-            {% endif %}
+          <div class="space-y-1 sm:col-span-2 rounded-xl border border-slate-200/80 bg-white/70 p-2.5">
+            <span id="stack-lbl-lang" class="block font-semibold text-slate-500">Linguagens por camada:</span>
+            <div class="grid gap-1.5 sm:grid-cols-3">
+              <div>
+                <span class="font-mono text-[11px] text-slate-500">Frontend:</span>
+                {% if layers.get("frontend") %}
+                  <strong class="text-slate-900">{{ layers.get("frontend") | join(", ") }}</strong>
+                {% else %}
+                  <span class="js-not-identified text-slate-500">N?o identificado</span>
+                {% endif %}
+              </div>
+              <div>
+                <span class="font-mono text-[11px] text-slate-500">Backend:</span>
+                {% if layers.get("backend") %}
+                  <strong class="text-slate-900">{{ layers.get("backend") | join(", ") }}</strong>
+                {% else %}
+                  <span class="js-not-identified text-slate-500">N?o identificado</span>
+                {% endif %}
+              </div>
+              <div>
+                <span class="font-mono text-[11px] text-slate-500">MicrosServiços:</span>
+                {% if layers.get("microservices") %}
+                  <strong class="text-slate-900">{{ layers.get("microservices") | join(", ") }}</strong>
+                {% else %}
+                  <span class="js-not-identified text-slate-500">N?o identificado</span>
+                {% endif %}
+              </div>
+            </div>
           </div>
           <div>
             <span id="stack-lbl-fw" class="font-semibold text-slate-500">Frameworks / CMS:</span>
