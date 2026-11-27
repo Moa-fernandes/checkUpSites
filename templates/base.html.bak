@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR" data-theme="light">
 <head>
   <meta charset="utf-8">
@@ -159,6 +159,15 @@
         
       </div>
 
+      <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 sm:col-span-5 md:col-span-4">
+  <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix"
+       onerror="this.style.display='none'; var fb=this.nextElementSibling; if(fb) fb.classList.remove('hidden');"
+       class="h-36 w-36 rounded-lg object-contain">
+  <div class="hidden rounded-xl border border-dashed border-amber-300 bg-amber-50 p-3 text-center font-mono text-[11px] text-amber-900">
+    QR Code ausente em <code>static/pix-qrcode.png</code>
+  </div>
+  <span class="mt-1.5 break-all text-center font-mono text-[11px] text-slate-500">Pix · {{ pix_key }}</span>
+</div>
       <div class="mt-6 flex justify-end">
         <button type="button" id="support-modal-done" data-i18n="close_btn"
           class="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:text-sm">
@@ -229,6 +238,15 @@
         
       </div>
 
+      <div class="flex flex-col items-center justify-center rounded-2xl border border-slate-200 bg-white p-3 sm:col-span-5 md:col-span-4">
+  <img src="{{ url_for('static', filename='pix-qrcode.png') }}" alt="QR Code Pix"
+       onerror="this.style.display='none'; var fb=this.nextElementSibling; if(fb) fb.classList.remove('hidden');"
+       class="h-36 w-36 rounded-lg object-contain">
+  <div class="hidden rounded-xl border border-dashed border-amber-300 bg-amber-50 p-3 text-center font-mono text-[11px] text-amber-900">
+    QR Code ausente em <code>static/pix-qrcode.png</code>
+  </div>
+  <span class="mt-1.5 break-all text-center font-mono text-[11px] text-slate-500">Pix · {{ pix_key }}</span>
+</div>
       <div class="mt-6 flex flex-col-reverse gap-2.5 sm:flex-row sm:justify-end">
         <button type="button" id="paywall-cancel" data-i18n="cancel_btn"
           class="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-300 bg-white px-5 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 sm:text-sm">
@@ -242,46 +260,7 @@
     </div>
   </div>
 
-  <footer class="no-print border-t border-slate-200 bg-white">
-    <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 text-sm text-slate-600 sm:px-6">
-      <div class="rounded-3xl border border-indigo-200/90 bg-indigo-50/60 p-5 sm:p-6">
-        <div class="grid gap-5 md:grid-cols-12 md:items-center">
-          <div class="space-y-2 md:col-span-8">
-            <p data-i18n="support_badge" class="text-xs font-bold uppercase tracking-wider text-indigo-800">Suporte do projeto</p>
-            <h2 data-i18n="support_title" class="text-lg font-extrabold text-slate-900">Apoie o checkUp via Pix</h2>
-            <p data-i18n="support_desc" class="text-xs leading-relaxed text-slate-700 sm:text-sm">
-              Contribuição voluntária para manter o diagnóstico gratuito e evoluir novas checagens de infraestrutura e acessibilidade.
-            </p>
-            <div class="flex flex-wrap items-center gap-2 pt-1">
-              <code id="pix-key-text" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-semibold text-slate-900">{{ pix_key }}</code>
-              <button type="button" id="btn-copy-pix" data-i18n="copy_pix_btn"
-                class="inline-flex min-h-[36px] items-center rounded-xl bg-indigo-700 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-800">
-                Copiar chave Pix
-              </button>
-              <span id="pix-copied-msg" class="hidden font-mono text-xs font-semibold text-emerald-700">OK</span>
-            </div>
-          </div>
-          
-        </div>
-      </div>
-
-      <div class="flex flex-col items-center gap-3 text-center">
-        <a href="/privacidade" data-i18n="privacy_link"
-           class="inline-flex min-h-[44px] items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-800 transition hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600">
-          Política de privacidade
-        </a>
-        <p class="leading-relaxed">
-          © {{ year }} <strong class="font-semibold text-slate-800">checkUp</strong>.
-          <span data-i18n="rights_text">Todos os direitos reservados.</span>
-          <span data-i18n="created_by">Criado por</span> {{ owner }}.
-        </p>
-        <p class="font-mono text-xs text-slate-500">
-          <span data-i18n="unique_visitors">Visitantes únicos</span>: {{ stats.visitors }} ·
-          <span data-i18n="page_views">Acessos à página</span>: {{ stats.visits }}
-        </p>
-      </div>
-    </div>
-  </footer>
+  
 
   <script>
     (function () {
@@ -685,439 +664,7 @@
     ["Adicione o cabeçalho Cross-Origin-Resource-Policy (CORP) na configuração do servidor/CDN.", "Add the Cross-Origin-Resource-Policy (CORP) header in your server/CDN configuration."],
     ["Marcos semânticos (landmarks) ausentes na página", "Missing semantic landmarks on page"],
     ["Landmarks estruturais ajudam usuários de leitores de tela a navegar rapidamente entre topo, conteúdo principal e rodapé.", "Structural landmarks help screen reader users quickly navigate between header, main content, and footer."],
-    ["Organize a página com <header>, <main> e <footer> semânticos.", "Structure the page using semantic <header>, <main>, and <footer> elements."],
-    ["Arquivo /.well-known/security.txt não publicado", "File /.well-known/security.txt not published"],
-    ["A ausência de security.txt dificulta que pesquisadores ou equipes encontrem um canal oficial de reporte de vulnerabilidades.", "The absence of security.txt makes it harder for researchers or teams to find an official vulnerability reporting channel."],
-    ["Publique /.well-known/security.txt com o campo Contact e validade (Expires).", "Publish /.well-known/security.txt with a Contact field and expiration date (Expires)."],
-    ["Acesso HTTP não redireciona automaticamente para HTTPS", "HTTP access does not automatically redirect to HTTPS"],
-    ["Site não entrega o endereço final em HTTPS", "Site does not serve the final URL over HTTPS"],
-    ["Certificado SSL/TLS expirado ou inválido", "SSL/TLS certificate expired or invalid"],
-    ["Certificado SSL/TLS próximo de vencer", "SSL/TLS certificate expiring soon"],
-    ["Protocolo TLS antigo em uso", "Legacy TLS protocol in use"],
-    ["Cabeçalho X-Powered-By expõe tecnologia do servidor", "X-Powered-By header exposes server technology"],
-    ["Resposta sem compressão HTTP (gzip/brotli)", "Response without HTTP compression (gzip/brotli)"],
-    ["Cadeia longa de redirecionamentos", "Long redirect chain"],
-    ["Tempo de resposta inicial do servidor alto", "High initial server response time"],
-    ["Cabeçalhos de segurança HTTP ausentes", "Missing HTTP security headers"],
-    ["Cookies sem atributos completos de segurança", "Cookies missing complete security attributes"],
-    ["Imagens quebradas", "Broken images"],
-    ["Links quebrados", "Broken links"],
-    ["Requisições de rede falharam no carregamento", "Network requests failed during load"],
-    ["Scripts bloqueantes no <head>", "Render-blocking scripts in <head>"],
-    ["Texto de teste ou erro visível na página", "Placeholder or error text visible on page"],
-    ["Indícios de debug em scripts inline", "Debug artifacts in inline scripts"],
-    ["Layout quebra no celular (rolagem lateral)", "Layout breaks on mobile (horizontal overflow)"],
-    ["Erros de JavaScript no console", "JavaScript console errors"],
-    ["IDs duplicados no HTML", "Duplicate IDs in HTML"],
-    ["Descrição da página ausente (meta description)", "Missing page description (meta description)"],
-    ["URL canônica ausente (link rel='canonical')", "Missing canonical URL (link rel='canonical')"],
-    ["Página marcada com noindex", "Page marked with noindex"],
-    ["Idioma da página não definido", "Page language not defined"],
-    ["Título da página ausente", "Missing page title"],
-    ["Imagens sem texto alternativo", "Images missing alternative text"],
-    ["Links sem texto descritivo", "Links without descriptive text"],
-    ["Botões sem nome", "Buttons without accessible name"],
-    ["Campos de formulário sem rótulo", "Form fields without labels"],
-    ["Zoom bloqueado no celular", "Pinch-zoom disabled on mobile"],
-    ["Iframes sem título", "Iframes missing title"],
-    ["Página sem título principal (h1)", "Page missing main heading (h1)"],
-    ["Mais de um título principal (h1)", "More than one main heading (h1)"],
-    ["Títulos pulam níveis (ex.: h2 seguido de h4)", "Headings skip levels (e.g., h2 followed by h4)"],
-    ["Parte do conteúdo só aparece com JavaScript", "Part of content only appears with JavaScript"],
-    ["CRÍTICO — Risco Alto de Incapacitação ou Degradação Grave", "CRITICAL — High Risk of Operational Impairment or Severe Degradation"],
-    ["Risco Elevado / Possível Incapacitação Operacional", "High Risk / Possible Operational Impairment"],
-    ["Operacional com Gargalos / Requer Correções", "Operational with Bottlenecks / Requires Fixes"],
-    ["Saudável / Sem Bloqueios Críticos Detectados", "Healthy / No Critical Blockers Detected"],
-    ["Não informado", "Not disclosed"],
-    ["Direto / Não identificado", "Direct / Unidentified"],
-    ["nenhuma", "none"],
-    ["N/D", "N/A"]
-  ];
-
-  const PT_TO_EN = new Map(EXACT_PHRASES);
-  const EN_TO_PT = new Map(EXACT_PHRASES.map(function (p) { return [p[1], p[0]]; }));
-
-  function translateCategory(val, lang) {
-    const k = String(val || "").trim();
-    const mapEn = { "Infraestrutura": "Infrastructure", "Acessibilidade": "Accessibility", "Qualidade": "Quality" };
-    const mapPt = { "Infrastructure": "Infraestrutura", "Accessibility": "Acessibilidade", "Quality": "Qualidade" };
-    return lang === "en" ? (mapEn[k] || k) : (mapPt[k] || k);
-  }
-
-  function translateLevel(val, lang) {
-    const k = String(val || "").trim().toLowerCase();
-    const mapEn = { "alta": "high", "média": "medium", "media": "medium", "baixa": "low", "alto": "high", "crítico": "critical", "critico": "critical", "prioridade alta": "High priority", "prioridade média": "Medium priority", "prioridade baixa": "Low priority" };
-    const mapPt = { "high": "alta", "medium": "media", "low": "baixa", "critical": "crítico", "high priority": "Prioridade alta", "medium priority": "Prioridade média", "low priority": "Prioridade baixa" };
-    return lang === "en" ? (mapEn[k] || val) : (mapPt[k] || val);
-  }
-
-  const REGEX_TO_EN = [
-    [/^PRIORIDADE ALTA \(CR[IÍ]TICO\)\s*[—-]\s*(\d+)\s+item\(ns\)$/i, function (_m, n) { return "HIGH PRIORITY (CRITICAL) — " + n + " item(s)"; }],
-    [/^PRIORIDADE M[EÉ]DIA \(MODERADO\)\s*[—-]\s*(\d+)\s+item\(ns\)$/i, function (_m, n) { return "MEDIUM PRIORITY (MODERATE) — " + n + " item(s)"; }],
-    [/^PRIORIDADE BAIXA \(MELHORIA\)\s*[—-]\s*(\d+)\s+item\(ns\)$/i, function (_m, n) { return "LOW PRIORITY (IMPROVEMENT) — " + n + " item(s)"; }],
-    [/^Nota Geral:\s*(\d+\/\d+)$/i, function (_m, s) { return "Overall Score: " + s; }],
-    [/^Total de apontamentos:\s*(\d+)$/i, function (_m, n) { return "Total findings: " + n; }],
-    [/^URL Auditada:\s*(.+)$/i, function (_m, u) { return "Audited URL: " + u; }],
-    [/^(\d+)\s+ponto\(s\)\s+de\s+atenção\s+identificado\(s\)$/i, function (_m, n) { return n + " finding(s) identified"; }],
-    [/^\(?(\d+)\s+ocorrência\(s\)\)?$/i, function (_m, n) { return "(" + n + " occurrence(s))"; }],
-    [/^(\d+)\s+dia\(s\)$/i, function (_m, n) { return n + " day(s)"; }],
-    [/^Todos\s+\((\d+)\)$/i, function (_m, n) { return "All (" + n + ")"; }],
-    [/^Infraestrutura\s+\((\d+)\)$/i, function (_m, n) { return "Infrastructure (" + n + ")"; }],
-    [/^Acessibilidade\s+\((\d+)\)$/i, function (_m, n) { return "Accessibility (" + n + ")"; }],
-    [/^Qualidade\s+\((\d+)\)$/i, function (_m, n) { return "Quality (" + n + ")"; }],
-    [/^Exibindo todos os (\d+) apontamentos$/i, function (_m, n) { return "Showing all " + n + " findings"; }],
-    [/^Filtro por categoria:\s*(.+?)\s*\((\d+)\s+item\(ns\)\)$/i, function (_m, cat, n) { return "Category filter: " + translateCategory(cat, "en") + " (" + n + " item(s))"; }],
-    [/^Filtrado por (.+?):\s*(\d+)\s+item\(ns\)\s+a corrigir$/i, function (_m, lvl, n) { return "Filtered by " + translateLevel(lvl, "en") + ": " + n + " item(s) to fix"; }],
-    [/^Ver detalhes \/ exemplos \((\d+)\)$/i, function (_m, n) { return "View details / examples (" + n + ")"; }],
-    [/^(\d+)\s+item\(ns\)$/i, function (_m, n) { return n + " item(s)"; }],
-    [/^Alta:\s*(\d+)\s*·\s*Média:\s*(\d+)\s*·\s*Baixa:\s*(\d+)\s*·\s*Tempo resposta:\s*(\d+)\s*ms$/i, function (_m, h, m, l, ms) {
-      return "High: " + h + " · Medium: " + m + " · Low: " + l + " · Response time: " + ms + " ms";
-    }],
-    [/^(\d+)\.\s*\[ALTA\]\s*\[(.+?)\]\s*(.+)$/i, function (_m, num, cat, title) { return num + ". [HIGH] [" + translateCategory(cat, "en") + "] " + translateText(title, "en"); }],
-    [/^(\d+)\.\s*\[M[EÉ]DIA\]\s*\[(.+?)\]\s*(.+)$/i, function (_m, num, cat, title) { return num + ". [MEDIUM] [" + translateCategory(cat, "en") + "] " + translateText(title, "en"); }],
-    [/^(\d+)\.\s*\[BAIXA\]\s*\[(.+?)\]\s*(.+)$/i, function (_m, num, cat, title) { return num + ". [LOW] [" + translateCategory(cat, "en") + "] " + translateText(title, "en"); }],
-    [/^\[ALTO\]\s*(.+)$/i, function (_m, rest) { return "[HIGH] " + translateText(rest, "en"); }],
-    [/^\[CR[IÍ]TICO\]\s*(.+)$/i, function (_m, rest) { return "[CRITICAL] " + translateText(rest, "en"); }],
-    [/^Cerca de (\d+) palavras só aparecem depois que o JavaScript roda\. Buscadores e algumas tecnologias de acessibilidade podem não ler esse conteúdo\.$/i, function (_m, w) {
-      return "About " + w + " words only appear after JavaScript executes. Search engines and some assistive technologies may not read this content.";
-    }],
-    [/^(.+?)\s*\((\d+)\s+fator\(es\)\s+crítico\(s\)\/relevante\(s\)\)$/i, function (_m, v, c) {
-      return translateText(v, "en") + " (" + c + " critical/relevant factor(s))";
-    }],
-    [/^Ação:\s*(.+)$/i, function (_m, a) { return "Action: " + translateText(a, "en"); }],
-    [/^Síntese Técnica Consolidada para\s+(.+?):\s*Pontuação geral\s+(\d+\/\d+)\s+com\s+(\d+)\s+apontamento\(s\)\s*\(Alta:\s*(\d+),\s*Média:\s*(\d+),\s*Baixa:\s*(\d+)\)\.\s*(.*)$/i, function (_m, u, sc, tot, h, md, lw, rest) {
-      return "Consolidated Technical Synthesis for " + u + ": Overall score " + sc + " with " + tot + " finding(s) (High: " + h + ", Medium: " + md + ", Low: " + lw + "). " + rest
-        .replace("Transporte:", "Transport:")
-        .replace("SSL válido: Sim", "Valid SSL: Yes")
-        .replace("SSL válido: Não", "Valid SSL: No")
-        .replace("Latência inicial (TTFB):", "Initial latency (TTFB):")
-        .replace("Redirecionamentos:", "Redirects:")
-        .replace("Servidor/CDN:", "Server/CDN:")
-        .replace("Tamanho HTML:", "HTML size:")
-        .replace("Verificação de links:", "Link check:")
-        .replace("quebrados", "broken")
-        .replace("Imagens com falha:", "Broken images:")
-        .replace("Falhas de rede:", "Network failures:");
-    }]
-  ];
-
-  const REGEX_TO_PT = [
-    [/^HIGH PRIORITY \(CRITICAL\)\s*[—-]\s*(\d+)\s+item\(s\)$/i, function (_m, n) { return "PRIORIDADE ALTA (CRÍTICO) — " + n + " item(ns)"; }],
-    [/^MEDIUM PRIORITY \(MODERATE\)\s*[—-]\s*(\d+)\s+item\(s\)$/i, function (_m, n) { return "PRIORIDADE MÉDIA (MODERADO) — " + n + " item(ns)"; }],
-    [/^LOW PRIORITY \(IMPROVEMENT\)\s*[—-]\s*(\d+)\s+item\(s\)$/i, function (_m, n) { return "PRIORIDADE BAIXA (MELHORIA) — " + n + " item(ns)"; }],
-    [/^Overall Score:\s*(\d+\/\d+)$/i, function (_m, s) { return "Nota Geral: " + s; }],
-    [/^Total findings:\s*(\d+)$/i, function (_m, n) { return "Total de apontamentos: " + n; }],
-    [/^Audited URL:\s*(.+)$/i, function (_m, u) { return "URL Auditada: " + u; }],
-    [/^(\d+)\s+finding\(s\)\s+identified$/i, function (_m, n) { return n + " ponto(s) de atenção identificado(s)"; }],
-    [/^\(?(\d+)\s+occurrence\(s\)\)?$/i, function (_m, n) { return "(" + n + " ocorrência(s))"; }],
-    [/^(\d+)\s+day\(s\)$/i, function (_m, n) { return n + " dia(s)"; }],
-    [/^All\s+\((\d+)\)$/i, function (_m, n) { return "Todos (" + n + ")"; }],
-    [/^Infrastructure\s+\((\d+)\)$/i, function (_m, n) { return "Infraestrutura (" + n + ")"; }],
-    [/^Accessibility\s+\((\d+)\)$/i, function (_m, n) { return "Acessibilidade (" + n + ")"; }],
-    [/^Quality\s+\((\d+)\)$/i, function (_m, n) { return "Qualidade (" + n + ")"; }],
-    [/^Showing all (\d+) findings$/i, function (_m, n) { return "Exibindo todos os " + n + " apontamentos"; }],
-    [/^Category filter:\s*(.+?)\s*\((\d+)\s+item\(s\)\)$/i, function (_m, cat, n) { return "Filtro por categoria: " + translateCategory(cat, "pt") + " (" + n + " item(ns))"; }],
-    [/^Filtered by (.+?):\s*(\d+)\s+item\(s\)\s+to fix$/i, function (_m, lvl, n) { return "Filtrado por " + translateLevel(lvl, "pt") + ": " + n + " item(ns) a corrigir"; }],
-    [/^View details \/ examples \((\d+)\)$/i, function (_m, n) { return "Ver detalhes / exemplos (" + n + ")"; }],
-    [/^(\d+)\s+item\(s\)$/i, function (_m, n) { return n + " item(ns)"; }],
-    [/^High:\s*(\d+)\s*·\s*Medium:\s*(\d+)\s*·\s*Low:\s*(\d+)\s*·\s*Response time:\s*(\d+)\s*ms$/i, function (_m, h, m, l, ms) {
-      return "Alta: " + h + " · Média: " + m + " · Baixa: " + l + " · Tempo resposta: " + ms + " ms";
-    }],
-    [/^(\d+)\.\s*\[HIGH\]\s*\[(.+?)\]\s*(.+)$/i, function (_m, num, cat, title) { return num + ". [ALTA] [" + translateCategory(cat, "pt") + "] " + translateText(title, "pt"); }],
-    [/^(\d+)\.\s*\[MEDIUM\]\s*\[(.+?)\]\s*(.+)$/i, function (_m, num, cat, title) { return num + ". [MEDIA] [" + translateCategory(cat, "pt") + "] " + translateText(title, "pt"); }],
-    [/^(\d+)\.\s*\[LOW\]\s*\[(.+?)\]\s*(.+)$/i, function (_m, num, cat, title) { return num + ". [BAIXA] [" + translateCategory(cat, "pt") + "] " + translateText(title, "pt"); }],
-    [/^\[HIGH\]\s*(.+)$/i, function (_m, rest) { return "[ALTO] " + translateText(rest, "pt"); }],
-    [/^\[CRITICAL\]\s*(.+)$/i, function (_m, rest) { return "[CRÍTICO] " + translateText(rest, "pt"); }],
-    [/^Action:\s*(.+)$/i, function (_m, a) { return "Ação: " + translateText(a, "pt"); }]
-  ];
-
-  function translateText(text, lang) {
-    if (typeof text !== "string") return text;
-    const normalized = text.replace(/\s+/g, " ").trim();
-    if (!normalized) return text;
-
-    const exactMap = lang === "en" ? PT_TO_EN : EN_TO_PT;
-    if (exactMap.has(normalized)) {
-      return exactMap.get(normalized);
-    }
-
-    const regexList = lang === "en" ? REGEX_TO_EN : REGEX_TO_PT;
-    for (let i = 0; i < regexList.length; i++) {
-      const rx = regexList[i][0];
-      const fn = regexList[i][1];
-      if (rx.test(normalized)) {
-        return normalized.replace(rx, fn);
-      }
-    }
-
-    return text;
-  }
-
-  function translateDeepValue(val, lang) {
-    if (Array.isArray(val)) return val.map(function (item) { return translateDeepValue(item, lang); });
-    if (val && typeof val === "object") {
-      const copy = {};
-      Object.keys(val).forEach(function (k) {
-        let v = val[k];
-        if (k === "category" && typeof v === "string") v = translateCategory(v, lang);
-        else if (k === "level" && typeof v === "string") v = translateLevel(v, lang);
-        else v = translateDeepValue(v, lang);
-        copy[k] = v;
-      });
-      return copy;
-    }
-    if (typeof val === "string") return translateText(val, lang);
-    return val;
-  }
-
-  function translateReportDom(explicitLang) {
-    const raw = (explicitLang || window.__checkupLang || localStorage.getItem("checkup_lang") || document.documentElement.lang || "pt").toLowerCase();
-    const lang = raw.startsWith("en") ? "en" : "pt";
-
-    const roots = [
-      document.querySelector("#resultado-container"),
-      document.querySelector("#relatorio-tecnico-pdf"),
-      document.querySelector("#bloco-arquivos-suporte")
-    ].filter(Boolean);
-
-    roots.forEach(function (root) {
-      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
-      let node;
-      while ((node = walker.nextNode())) {
-        const parentTag = node.parentElement ? node.parentElement.tagName : "";
-        if (parentTag === "SCRIPT" || parentTag === "STYLE") continue;
-        const nextVal = translateText(node.nodeValue, lang);
-        if (nextVal !== node.nodeValue) {
-          node.nodeValue = nextVal;
-        }
-      }
-
-      root.querySelectorAll(".item-problema").forEach(function (li) {
-        const catEl = li.querySelector("span.bg-indigo-50");
-        if (catEl) catEl.textContent = translateCategory(catEl.textContent.trim(), lang);
-        const lvlEl = li.querySelector("span.uppercase.tracking-wide");
-        if (lvlEl) {
-          const rawLvl = (li.getAttribute("data-level") || lvlEl.textContent || "").trim();
-          lvlEl.textContent = translateLevel(rawLvl, lang);
-        }
-      });
-    });
-  }
-
-  window.getTranslatedReportPayload = function (recipientEmail, explicitLang) {
-    const raw = (explicitLang || window.__checkupLang || "pt").toLowerCase();
-    const lang = raw.startsWith("en") ? "en" : "pt";
-    const rawEl = document.getElementById("dados-relatorio");
-    if (!rawEl) return null;
-    const basePayload = JSON.parse(rawEl.textContent);
-    const translated = lang === "en" ? translateDeepValue(basePayload, "en") : basePayload;
-    translated.language = lang;
-    translated.delivery = {
-      method: "email_and_download",
-      recipient_email: recipientEmail || "",
-      voluntary_support: true
-    };
-    return translated;
-  };
-
-  window.applyFullReportTranslation = translateReportDom;
-  window.checkupTranslateReport = translateReportDom;
-})();
-</script>
-
-  <!-- Banner de Consentimento de Cookies (Aceitar / Rejeitar) -->
-  <div id="cookie-consent-banner" role="dialog" aria-modal="false" aria-labelledby="cookie-consent-title"
-    class="no-print fixed inset-x-0 bottom-0 z-40 hidden px-3 pb-3 sm:px-6 sm:pb-5 lg:px-[265px]">
-    <div class="mx-auto w-full max-w-full rounded-3xl border border-slate-200/90 bg-white/95 p-4 shadow-2xl ring-1 ring-slate-900/5 backdrop-blur sm:p-6">
-      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div class="min-w-0 flex-1 space-y-1.5">
-          <div class="flex flex-wrap items-center gap-2">
-            <span class="inline-flex items-center gap-1.5 rounded-full bg-indigo-50 px-2.5 py-0.5 font-mono text-[11px] font-bold uppercase tracking-wider text-indigo-800 ring-1 ring-inset ring-indigo-200">
-              <span class="h-2 w-2 rounded-full bg-indigo-600"></span>
-              Cookies &amp; LGPD
-            </span>
-            <h2 id="cookie-consent-title" class="text-sm font-extrabold text-slate-900 sm:text-base">
-              Sua privacidade e cookies no checkUp
-            </h2>
-          </div>
-          <p id="cookie-consent-desc" class="text-xs leading-relaxed text-slate-600 sm:text-sm">
-            Usamos cookies t?cnicos essenciais para o funcionamento do site e, com seu aceite, guardamos prefer?ncias de tema, idioma e hist?rico local de verifica??es. Consulte a
-            <a id="cookie-privacy-link" href="/privacidade" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Pol?tica de privacidade</a>.
-          </p>
-          <p id="cookie-privacy-feedback" class="hidden font-mono text-[11px] font-semibold text-indigo-700"></p>
-        </div>
-
-        <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-          <button type="button" id="btn-cookie-reject"
-            class="inline-flex min-h-[42px] items-center justify-center rounded-xl border border-slate-300 bg-white px-4 py-2 text-xs font-bold text-slate-800 transition hover:border-slate-400 hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-sm">
-            Rejeitar
-          </button>
-          <button type="button" id="btn-cookie-accept"
-            class="inline-flex min-h-[42px] items-center justify-center rounded-xl bg-indigo-700 px-5 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-sm">
-            Aceitar cookies
-          </button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<script>
-(function () {
-  const STORAGE_KEY = 'checkup_cookie_consent_v1';
-  const PRIVACY_CLICK_KEY = 'checkup_privacy_opened_at';
-  const COOKIE_NAME = 'checkup_consent';
-  const banner = document.getElementById('cookie-consent-banner');
-  const btnAccept = document.getElementById('btn-cookie-accept');
-  const btnReject = document.getElementById('btn-cookie-reject');
-  const privacyLink = document.getElementById('cookie-privacy-link');
-  const privacyFeedback = document.getElementById('cookie-privacy-feedback');
-  const titleEl = document.getElementById('cookie-consent-title');
-  const descEl = document.getElementById('cookie-consent-desc');
-
-  function isEnglishActive() {
-    const l = (window.__checkupLang || localStorage.getItem('checkup_lang') || document.documentElement.lang || 'pt') + '';
-    return l.toLowerCase().startsWith('en');
-  }
-
-  function readConsent() {
-    try {
-      const fromLs = localStorage.getItem(STORAGE_KEY);
-      if (fromLs === 'accepted' || fromLs === 'rejected') return fromLs;
-    } catch (_e) {}
-    const match = document.cookie.match(new RegExp('(?:^|;\s*)' + COOKIE_NAME + '=(accepted|rejected)'));
-    return match ? match[1] : null;
-  }
-
-  function writeConsent(choice) {
-    window.__checkupCookieConsent = choice;
-    try {
-      localStorage.setItem(STORAGE_KEY, choice);
-      if (choice === 'rejected') {
-        localStorage.removeItem('checkup_theme');
-        localStorage.removeItem('checkup_lang');
-      }
-    } catch (_e) {}
-    const maxAge = 60 * 60 * 24 * 180;
-    document.cookie = COOKIE_NAME + '=' + choice + '; max-age=' + maxAge + '; path=/; SameSite=Lax';
-    window.dispatchEvent(new CustomEvent('checkup:consentchange', { detail: { consent: choice } }));
-  }
-
-  function handlePrivacyClick(ev) {
-    ev.preventDefault();
-    const isEn = isEnglishActive();
-    const nowIso = new Date().toISOString();
-    try {
-      localStorage.setItem(PRIVACY_CLICK_KEY, nowIso);
-    } catch (_e) {}
-    document.cookie = 'checkup_privacy_viewed=1; max-age=' + (60 * 60 * 24 * 30) + '; path=/; SameSite=Lax';
-    if (privacyFeedback) {
-      privacyFeedback.textContent = isEn
-        ? 'Opening Privacy Policy ? your cookie choice stays available anytime.'
-        : 'Abrindo Pol?tica de privacidade ? voc? pode aceitar ou rejeitar cookies a qualquer momento.';
-      privacyFeedback.classList.remove('hidden');
-    }
-    const langParam = isEn ? '?lang=en' : '?lang=pt';
-    setTimeout(function () {
-      window.location.href = '/privacidade' + langParam + '#cookies';
-    }, 160);
-  }
-
-  function applyConsentTexts() {
-    const isEn = isEnglishActive();
-    if (titleEl) {
-      titleEl.textContent = isEn ? 'Your privacy & cookies on checkUp' : 'Sua privacidade e cookies no checkUp';
-    }
-    if (descEl) {
-      descEl.innerHTML = isEn
-        ? 'We use essential technical cookies for site functionality and, if accepted, store theme, language, and local audit preferences. Read our <a id="cookie-privacy-link" href="/privacidade?lang=en" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Privacy policy</a>.'
-        : 'Usamos cookies t?cnicos essenciais para o funcionamento do site e, com seu aceite, guardamos prefer?ncias de tema, idioma e hist?rico local de verifica??es. Consulte a <a id="cookie-privacy-link" href="/privacidade?lang=pt" class="font-semibold text-indigo-700 underline underline-offset-2 hover:text-indigo-900">Pol?tica de privacidade</a>.';
-      const boundLink = document.getElementById('cookie-privacy-link');
-      if (boundLink) {
-        boundLink.addEventListener('click', handlePrivacyClick);
-      }
-    }
-    if (btnReject) btnReject.textContent = isEn ? 'Reject' : 'Rejeitar';
-    if (btnAccept) btnAccept.textContent = isEn ? 'Accept cookies' : 'Aceitar cookies';
-  }
-
-  function showBanner() {
-    if (!banner) return;
-    applyConsentTexts();
-    banner.classList.remove('hidden');
-  }
-
-  function hideBanner() {
-    if (!banner) return;
-    banner.classList.add('hidden');
-  }
-
-  if (privacyLink) {
-    privacyLink.addEventListener('click', handlePrivacyClick);
-  }
-  if (btnAccept) {
-    btnAccept.addEventListener('click', function () {
-      writeConsent('accepted');
-      hideBanner();
-    });
-  }
-  if (btnReject) {
-    btnReject.addEventListener('click', function () {
-      writeConsent('rejected');
-      hideBanner();
-    });
-  }
-
-  window.checkupOpenCookieConsent = showBanner;
-  window.addEventListener('checkup:langchange', applyConsentTexts);
-
-  const existing = readConsent();
-  window.__checkupCookieConsent = existing || 'pending';
-  if (!existing) {
-    showBanner();
-  }
-})();
-</script>
-
-  <footer class="no-print border-t border-slate-200 bg-white">
-    <div class="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-8 text-sm text-slate-600 sm:px-6">
-      <div class="rounded-3xl border border-indigo-200/90 bg-indigo-50/60 p-5 sm:p-6">
-        <div class="grid gap-5 md:grid-cols-12 md:items-center">
-          <div class="space-y-2 md:col-span-8">
-            <p data-i18n="support_badge" class="text-xs font-bold uppercase tracking-wider text-indigo-800">Suporte do projeto</p>
-            <h2 data-i18n="support_title" class="text-lg font-extrabold text-slate-900">Apoie o checkUp via Pix</h2>
-            <p data-i18n="support_desc" class="text-xs leading-relaxed text-slate-700 sm:text-sm">
-              Contribuição voluntária para manter o diagnóstico gratuito e evoluir novas checagens de infraestrutura e acessibilidade.
-            </p>
-            <div class="flex flex-wrap items-center gap-2 pt-1">
-              <code id="pix-key-text" class="rounded-xl border border-slate-300 bg-white px-3 py-1.5 font-mono text-xs font-semibold text-slate-900">{{ pix_key }}</code>
-              <button type="button" id="btn-copy-pix" data-i18n="copy_pix_btn"
-                class="inline-flex min-h-[36px] items-center rounded-xl bg-indigo-700 px-3.5 py-1.5 text-xs font-bold text-white transition hover:bg-indigo-800">
-                Copiar chave Pix
-              </button>
-              <span id="pix-copied-msg" class="hidden font-mono text-xs font-semibold text-emerald-700">OK</span>
-            </div>
-          </div>
-          
-        </div>
-      </div>
-
-      <div class="flex flex-col items-center gap-3 text-center">
-        <a href="/privacidade" data-i18n="privacy_link"
-           class="inline-flex min-h-[44px] items-center rounded-xl border border-slate-300 bg-white px-4 py-2.5 font-semibold text-slate-800 transition hover:border-indigo-300 hover:bg-indigo-50/50 hover:text-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600">
-          Política de privacidade
-        </a>
-        <p class="leading-relaxed">
-          © {{ year }} <strong class="font-semibold text-slate-800">checkUp</strong>.
-          <span data-i18n="rights_text">Todos os direitos reservados.</span>
-          <span data-i18n="created_by">Criado por</span> {{ owner }}.
-        </p>
-        <p class="font-mono text-xs text-slate-500">
-          <span data-i18n="unique_visitors">Visitantes únicos</span>: {{ stats.visitors }} ·
-          <span data-i18n="page_views">Acessos à página</span>: {{ stats.visits }}
-        </p>
-      </div>
-    </div>
-  </footer>
+    ["Organize a página com <header>, <main> e 
 
   <script>
     (function () {
@@ -2623,7 +2170,6 @@
     </div>
   </div>
 
-
 <script>
 (function () {
   const STORAGE_KEY = 'checkup_cookie_consent_v1';
@@ -2709,3 +2255,4 @@
 
 </body>
 </html>
+
