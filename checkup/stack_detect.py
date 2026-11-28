@@ -40,11 +40,13 @@ def _h(key: str, value: str | None = None, pts: int = 2, proof: bool = False) ->
 
 
 FRONTEND_LANGUAGES = [
-    ("HTML5", "frontend", [_t("html", r"<!doctype html", 2)]),
-    ("JavaScript", "frontend", [_t("html", r"<script(?![^>]*application/ld\+json)", 2)]),
-    ("CSS", "frontend", [_t("html", r"<link[^>]+rel=[\"']?stylesheet", 2)]),
+    ("HTML5", "frontend", [
+        _t("html", r"<!doctype|<html", 2),
+        _t("content_type", r"text/html", 2),
+    ]),
+    ("JavaScript", "frontend", [_t("html", r"<script", 2), _t("srcs", r"\.m?js(?:\?|#|$)", 2)]),
+    ("CSS", "frontend", [_t("html", r"<style|<link[^>]+stylesheet", 2), _t("srcs", r"\.css(?:\?|#|$)", 2)]),
 ]
-
 BACKEND_LANGUAGES = [
     ("PHP", "backend", [_h("^x-powered-by$", r"php", 3, proof=True), _t("cookies", r"phpsessid", 2)]),
     ("Node.js", "backend", [_h("^x-powered-by$", r"express|node", 3, proof=True)]),
@@ -81,7 +83,10 @@ FRAMEWORK_RULES = [
 LIBRARY_RULES = [
     ("jQuery", "library", [_t("srcs", r"jquery", 2), _t("bundles", r"jquery", 1)]),
     ("Bootstrap", "library", [_t("srcs", r"bootstrap", 2), _t("html", r"class=[\"'][^\"']*\bcontainer-fluid\b", 1)]),
-    ("Tailwind CSS", "library", [_t("srcs", r"tailwind", 2), _t("html", r"class=[\"'][^\"']*\b(?:px|py|mt|mb|mx|my)-\d", 1)]),
+    ("Tailwind CSS", "library", [
+        _t("srcs", r"tailwind|cdn\.tailwindcss\.com", 2),
+        _t("html", r"\b(?:px|py|pt|pb|mx|my|mt|mb|gap|flex|grid|rounded|bg-slate|text-slate|indigo)-[\w-]+", 2),
+    ]),
     ("Font Awesome", "library", [_t("srcs", r"font-?awesome", 2), _t("html", r"\bfa-(?:solid|brands|regular|light)\b", 1)]),
     ("Swiper", "library", [_t("srcs", r"swiper", 2), _t("html", r"swiper-(?:container|wrapper|slide)", 1)]),
     ("Chart.js", "library", [_t("srcs", r"chart(?:\.umd)?(?:\.min)?\.js", 2), _t("bundles", r"new chart\(", 2)]),
@@ -163,6 +168,7 @@ def _build_context(raw_info: dict, rendered: dict) -> dict:
         "cookies": " ".join(raw_info.get("set_cookies") or []).lower(),
         "bundles": _fetch_same_origin_bundles(raw_info.get("html") or "", raw_info.get("final_url") or ""),
         "headers": {str(k).lower(): str(v).lower() for k, v in (raw_info.get("headers") or {}).items()},
+        "content_type": str((raw_info.get("headers") or {}).get("content-type") or "").lower(),
     }
 
 
@@ -172,7 +178,10 @@ def _eval_signal(ctx: dict, sig: dict) -> str | None:
             if re.search(sig["key"], name) and (sig["value"] is None or re.search(sig["value"], value)):
                 return f"cabeçalho {name}: {value[:40]}"
         return None
-    match = re.search(sig["pattern"], ctx.get(sig["where"], ""))
+    if sig["where"] == "content_type":
+        match = re.search(sig["pattern"], ctx.get("content_type", ""))
+    else:
+        match = re.search(sig["pattern"], ctx.get(sig["where"], ""))
     return f"{sig['where']}: {match.group(0)[:50]}" if match else None
 
 

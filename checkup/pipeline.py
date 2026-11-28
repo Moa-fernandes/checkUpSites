@@ -26,6 +26,7 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
     q = rendered.get("quality") or {}
     failed_reqs = rendered.get("failed_requests") or []
     final_html = rendered.get("html") or raw_info.get("html") or ""
+    is_browser_rendered = bool(rendered.get("rendered"))
 
     a11y_extra = audit_a11y_keyboard_and_landmarks(final_html)
     surface_audit = raw_info.get("surface_audit") or audit_exposed_surface(
@@ -36,7 +37,7 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
     extra = (
         audit_infrastructure(raw_info)
         + contrast_issues(rendered.get("colors") or [])
-        + js_dependency_issues(raw_info.get("html") or "", final_html, bool(rendered.get("rendered")))
+        + js_dependency_issues(raw_info.get("html") or "", final_html, is_browser_rendered)
         + quality_issues(rendered, broken_links)
         + a11y_extra["issues"]
         + surface_audit["issues"]
@@ -44,7 +45,13 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
 
     result = check_html(final_html, extra)
     result["url"] = raw_info["final_url"]
-    result["execution_mode"] = "chromium" if rendered.get("rendered") else "serverless-html"
+    result["execution_mode"] = "chromium" if is_browser_rendered else "serverless-html"
+    result["is_browser_rendered"] = is_browser_rendered
+    result["audit_mode_note"] = (
+        "Auditoria completa com navegador headless (DOM, CSS, contraste e mobile)."
+        if is_browser_rendered
+        else "Auditoria em modo serverless (HTML bruto, rede, SSL/TLS e cabeçalhos; sem execução de JS/browser)."
+    )
 
     ssl_info = raw_info.get("ssl") or {}
     result["metrics"] = {
