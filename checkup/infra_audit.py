@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from concurrent.futures import ThreadPoolExecutor
 from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
@@ -278,29 +279,65 @@ def audit_exposed_surface(base_url: str, raw_html: str) -> dict:
     issues: list[dict] = []
 
     ips = get_resolved_ips(host)
+    soup = BeautifulSoup(raw_html or "", "html.parser")
+    manifest_link = soup.find("link", rel=lambda v: v and "manifest" in [x.lower() for x in (v if isinstance(v, list) else [v])])
+    manifest_url = urljoin(origin + "/", manifest_link["href"]) if (manifest_link and manifest_link.get("href")) else f"{origin}/manifest.json"
+
+    asset_urls: list[str] = []
+    local_asset_candidates: list[str] = []
+    for tag_name, attr_name in [("script", "src"), ("link", "href")]:
+        for el in soup.find_all(tag_name):
+            raw_attr = (el.get(attr_name) or "").strip()
+            if not raw_attr or raw_attr.startswith("data:"):
+                continue
+            resolved = urljoin(base_url, raw_attr)
+            asset_urls.append(resolved)
+            if urlparse(resolved).hostname == host and len(local_asset_candidates) < 4:
+                local_asset_candidates.append(resolved)
+
+    probe_tasks: list[tuple[str, str, float]] = []
+    if host:
+        probe_tasks.append(("robots", f"{origin}/robots.txt", 3.5))
+        probe_tasks.append(("security", f"{origin}/.well-known/security.txt", 3.0))
+        probe_tasks.append(("sitemap", f"{origin}/sitemap.xml", 3.0))
+        probe_tasks.append(("manifest", manifest_url, 2.5))
+        for asset_u in local_asset_candidates:
+            probe_tasks.append((f"asset:{asset_u}", asset_u, 2.5))
+
+    probed: dict[str, object] = {}
+    if probe_tasks:
+        with ThreadPoolExecutor(max_workers=min(6, len(probe_tasks))) as pool:
+            futures = {
+                key: pool.submit(safe_probe_url, target_u, t_out)
+                for key, target_u, t_out in probe_tasks
+            }
+            for key, fut in futures.items():
+                probed[key] = fut.result()
 
     robots_present = False
     robots_disallows_all = False
-    r_robots = safe_probe_url(f"{origin}/robots.txt", timeout_s=3.5) if host else None
+    r_robots = probed.get("robots")
     if r_robots is not None and r_robots.status_code == 200 and r_robots.text:
         robots_present = True
-        low_txt = r_robots.text.lower()
-        if "disallow: /" in low_txt and "disallow: /." not in low_txt:
-            robots_disallows_all = True
-            issues.append({
-                "id": "robots-disallow-all",
-                "level": "alta",
-                "category": "Infraestrutura",
-                "title": "robots.txt bloqueia o acesso geral ao site (Disallow: /)",
-                "count": 1,
-                "location": "/robots.txt",
-                "explanation": "A regra Disallow: / impede rastreadores de indexar o site.",
-                "fix": "Revise /robots.txt para liberar as rotas públicas.",
-                "examples": ["Detectado 'Disallow: /' em /robots.txt"],
-            })
+        for line in r_robots.text.splitlines():
+            clean_line = line.split("#", 1)[0].strip().lower()
+            if re.match(r"^disallow\s*:\s*/\s*$", clean_line):
+                robots_disallows_all = True
+                issues.append({
+                    "id": "robots-disallow-all",
+                    "level": "alta",
+                    "category": "Infraestrutura",
+                    "title": "robots.txt bloqueia o acesso geral ao site (Disallow: /)",
+                    "count": 1,
+                    "location": "/robots.txt",
+                    "explanation": "A regra Disallow: / impede rastreadores de indexar o site.",
+                    "fix": "Revise /robots.txt para liberar as rotas públicas.",
+                    "examples": ["Detectado 'Disallow: /' em /robots.txt"],
+                })
+                break
 
     security_txt_present = False
-    r_sec = safe_probe_url(f"{origin}/.well-known/security.txt", timeout_s=3.0) if host else None
+    r_sec = probed.get("security")
     if r_sec is not None and r_sec.status_code == 200 and ("contact:" in (r_sec.text or "").lower()):
         security_txt_present = True
     else:
@@ -317,31 +354,22 @@ def audit_exposed_surface(base_url: str, raw_html: str) -> dict:
         })
 
     sitemap_present = False
-    r_map = safe_probe_url(f"{origin}/sitemap.xml", timeout_s=3.0) if host else None
-    if r_map is not None and r_map.status_code == 200 and ("<urlset" in (r_map.text or "").lower() or "<sitemapindex" in (r_map.text or "").lower()):
+    r_map = probed.get("sitemap")
+    if r_map is not None and r_map.status_code == 200 and (
+        "<urlset" in (r_map.text or "").lower() or "<sitemapindex" in (r_map.text or "").lower()
+    ):
         sitemap_present = True
 
     manifest_present = False
-    soup = BeautifulSoup(raw_html or "", "html.parser")
-    manifest_link = soup.find("link", rel=lambda v: v and "manifest" in [x.lower() for x in (v if isinstance(v, list) else [v])])
-    manifest_url = urljoin(origin + "/", manifest_link["href"]) if (manifest_link and manifest_link.get("href")) else f"{origin}/manifest.json"
-    r_man = safe_probe_url(manifest_url, timeout_s=2.5) if host else None
+    r_man = probed.get("manifest")
     if r_man is not None and r_man.status_code == 200 and ("{" in (r_man.text or "")):
         manifest_present = True
 
     asset_snippets: list[str] = []
-    asset_urls: list[str] = []
-    for tag_name, attr_name in [("script", "src"), ("link", "href")]:
-        for el in soup.find_all(tag_name):
-            raw_attr = (el.get(attr_name) or "").strip()
-            if not raw_attr or raw_attr.startswith("data:"):
-                continue
-            resolved = urljoin(base_url, raw_attr)
-            asset_urls.append(resolved)
-            if urlparse(resolved).hostname == host and len(asset_snippets) < 4:
-                r_asset = safe_probe_url(resolved, timeout_s=2.5)
-                if r_asset is not None and r_asset.status_code == 200 and r_asset.text:
-                    asset_snippets.append(r_asset.text[:4000])
+    for asset_u in local_asset_candidates:
+        r_asset = probed.get(f"asset:{asset_u}")
+        if r_asset is not None and r_asset.status_code == 200 and r_asset.text:
+            asset_snippets.append(r_asset.text[:4000])
 
     debug_patterns = ["werkzeug debugger", "traceback (most recent call last)", "stack trace", "sql syntax error"]
     html_low = (raw_html or "").lower()
@@ -429,7 +457,6 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
     def has_rx(pattern: str, text: str = low_html) -> bool:
         return bool(re.search(pattern, text, re.IGNORECASE))
 
-    # --- FRONTEND (HTML / CSS / JS / TS no navegador e bundles client-side) ---
     if "<script" in low_html or 'type="module"' in low_html or has_rx(r"\.js(?:[\"'\?&#]|$)"):
         add_fe("JavaScript", "scripts/bundles no navegador")
     if has_rx(r"\.ts(?:x)?(?:[\"'\?&#]|$)") or "typescript" in low_html or "tsx" in low_html:
@@ -439,7 +466,6 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
     if "<html" in low_html or "<body" in low_html:
         add_fe("HTML5", "estrutura de marcação web")
 
-    # --- BACKEND (cabeçalhos de origem, cookies de sessão, SSR, rotas backend) ---
     if any(k in low_headers for k in ("php", "phpsessid")) or "/wp-content/" in low_html or has_rx(r"\.php(?:[\"'\?&#]|$)"):
         add_be("PHP", "cabeçalho/sessão/rotas PHP")
     if any(k in low_headers for k in ("asp.net", "x-aspnet-version", "aspnet_sessionid")) or has_rx(r"\.aspx?(?:[\"'\?&#]|$)"):
@@ -455,8 +481,6 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
     if any(k in low_headers for k in ("golang", "fiber", "gin", "echo")) or has_rx(r"\bgo\s+1\.\d+"):
         add_be("Go", "assinatura de serviço/runtime Go")
 
-    # --- MICROSSERVIÇOS / APIs / EDGE / WORKERS / EVENTOS ---
-    # Procura indícios públicos de APIs externas/subdomínios, GraphQL, gRPC/WebSockets, Edge Workers ou serviços dedicados
     current_host = (urlparse(str((raw_info or {}).get("final_url") or "")).hostname or "").lower()
     external_hosts = {
         (urlparse(u).hostname or "").lower()
@@ -478,20 +502,18 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
             add_ms("Go", "endpoints/serviços de alta concorrência")
         if any(tok in low_html for tok in ("/api/py", "fastapi", "uvicorn", "celery", "flask", "django")) or any(tok in low_headers for tok in ("uvicorn", "fastapi")):
             add_ms("Python", "serviços/workers/API Python")
-        if any(tok in low_html for tok in ("/api/", "graphql", "apollo", "trpc", "socket.io", "next/api", "edge-runtime")) or "node" in low_headers:
+        if any(tok in low_html for tok in ("/api/", "graphql", "apollo", "trpc", "socket.io", "next.api", "edge-runtime")) or "node" in low_headers:
             add_ms("Node.js / TypeScript", "rotas API/BFF/Edge/serviços")
         if any(tok in low_html for tok in ("spring", "quarkus", "micronaut", "grpc")) or any(tok in low_headers for tok in ("spring", "quarkus")):
             add_ms("Java / JVM", "serviços/APIs corporativas")
         if not microservice_langs:
             add_ms("HTTP/REST APIs & Edge", f"{len(api_or_ms_endpoints)} rota(s)/endpoint(s) e {len(external_hosts)} host(s) auxiliares")
 
-    # Lista consolidada de linguagens (mantém compatibilidade com templates e JSON)
     languages: list[str] = []
     for item in frontend_langs + backend_langs + microservice_langs:
         if item not in languages:
             languages.append(item)
 
-    # --- FRAMEWORKS / CMS ---
     if any(k in low_html for k in ("/_next/", "__next_data__", "__next_f")) or any(k in low_headers for k in ("x-nextjs-", "next.js")):
         add_list(frameworks, "Next.js", "estrutura /_next/ ou __NEXT_DATA__")
     if any(k in low_html for k in ("/__nuxt", "__nuxt__", "/_nuxt/")):
@@ -523,13 +545,12 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
     if "csrfmiddlewaretoken" in low_html or "django" in low_headers:
         add_list(frameworks, "Django", "assinaturas Django")
 
-    # --- BIBLIOTECAS / UI / ANALYTICS ---
     if has_rx(r'class="[^"]*(?:sm:|md:|lg:|xl:|2xl:|px-\d|py-\d|mx-auto|bg-(?:slate|gray|zinc|indigo|blue|emerald|red)-\d{2,3}|text-(?:slate|gray|zinc|indigo|blue|white)|rounded-(?:xl|2xl|3xl|full))') or "tailwindcss" in low_html:
         add_list(libraries, "Tailwind CSS", "classes utilitárias / Tailwind")
     if has_rx(r'class="[^"]*(?:container-fluid|col-(?:xs|sm|md|lg|xl)-\d+|btn-(?:primary|secondary|success|danger)|navbar-nav)') or has_rx(r"bootstrap(?:\.bundle)?(?:\.min)?\.(?:js|css)"):
         add_list(libraries, "Bootstrap", "grid/componentes/assets Bootstrap")
-    if has_rx(r"jquery[.-][\d.]*(?:\.min)?\.js") or ("jquery" in low_html and ("$" in asset_code_str or "jQuery" in full_scan_blob)):
-        add_list(libraries, "jQuery", "script/referência jQuery")
+    if has_rx(r"jquery[.-][\d.]*(?:\.min)?\.js") or has_rx(r"\b(?:window\.jquery|\$\.fn\.jquery)\b", full_scan_blob):
+        add_list(libraries, "jQuery", "script/assinatura jQuery")
     if has_rx(r"three(?:\.module|\.min)?\.js") or ("three" in low_html and ("webglrenderer" in low_html or "perspectivecamera" in low_html)):
         add_list(libraries, "Three.js", "bundle/API Three.js")
     if has_rx(r"chart(?:\.umd|\.min)?\.js") or "echarts" in low_html or "apexcharts" in low_html:
@@ -551,7 +572,6 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
     if "sentry.io" in low_html or "__sentry__" in low_html:
         add_list(libraries, "Sentry", "monitoramento de erros")
 
-    # --- PLATAFORMAS / CDN / SERVIDOR ---
     if cdn and cdn != "Direto / Não identificado":
         add_list(platforms, cdn, "cabeçalho CDN")
     if server and server != "Não informado":

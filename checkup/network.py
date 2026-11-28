@@ -123,16 +123,27 @@ def inspect_ssl_certificate(url: str) -> dict:
         }
 
     ctx = ssl.create_default_context()
-    try:
-        with socket.create_connection((host, 443), timeout=SSL_TIMEOUT) as sock:
-            with ctx.wrap_socket(sock, server_hostname=host) as ssock:
-                cert = ssock.getpeercert()
-                tls_version = ssock.version()
-    except Exception as exc:
+    candidates = get_resolved_ips(host) or [host]
+    cert = None
+    tls_version = None
+    last_exc: Exception | None = None
+
+    for target_addr in candidates[:4]:
+        try:
+            with socket.create_connection((target_addr, 443), timeout=SSL_TIMEOUT) as sock:
+                with ctx.wrap_socket(sock, server_hostname=host) as ssock:
+                    cert = ssock.getpeercert()
+                    tls_version = ssock.version()
+                    last_exc = None
+                    break
+        except Exception as exc:
+            last_exc = exc
+
+    if last_exc is not None or cert is None:
         return {
             "checked": True, "valid": False, "days_left": None,
             "expires_at": None, "issuer": None, "tls_version": None,
-            "error": str(exc)[:140],
+            "error": str(last_exc)[:140] if last_exc else "Falha ao obter certificado TLS.",
         }
 
     issuer = _format_issuer(cert)
@@ -288,50 +299,55 @@ def check_links(urls: list[str]) -> tuple[list[str], int]:
     return broken, len(unique_urls)
 
 
+def _check_one_live_target(item: dict) -> dict:
+    name = item.get("name") or item.get("url") or "Alvo"
+    url = item.get("url") or ""
+    start = time.perf_counter()
+    ok = False
+    status_code = None
+    latency_ms = None
+    error_msg = None
+    try:
+        if not url or not is_safe_url(url):
+            raise ValueError("URL inválida ou bloqueada.")
+        resp = requests.get(
+            url,
+            headers={"User-Agent": USER_AGENT},
+            timeout=LINK_TIMEOUT,
+            allow_redirects=True,
+        )
+        latency_ms = round((time.perf_counter() - start) * 1000)
+        status_code = resp.status_code
+        ok = 200 <= resp.status_code < 400
+    except Exception as exc:
+        latency_ms = round((time.perf_counter() - start) * 1000)
+        error_msg = str(exc)[:100]
+
+    checked_at = datetime.now().strftime("%H:%M:%S")
+    if ok and (latency_ms is None or latency_ms < 2500):
+        status, status_label = "online", "ONLINE"
+    elif ok:
+        status, status_label = "degraded", "LENTO"
+    else:
+        status, status_label = "offline", (f"OFF ({status_code})" if status_code else "OFFLINE")
+
+    return {
+        "name": name,
+        "url": url,
+        "ok": ok,
+        "status": status,
+        "status_label": status_label,
+        "status_code": status_code,
+        "latency_ms": latency_ms,
+        "checked_at": checked_at,
+        "error": error_msg,
+    }
+
+
 def check_live_targets(targets=None) -> list[dict]:
-    items = targets if targets is not None else DEFAULT_LIVE_TARGETS
-    results = []
-    for item in items:
-        name = item.get("name") or item.get("url") or "Alvo"
-        url = item.get("url") or ""
-        start = time.perf_counter()
-        ok = False
-        status_code = None
-        latency_ms = None
-        error_msg = None
-        try:
-            if not url or not is_safe_url(url):
-                raise ValueError("URL inválida ou bloqueada.")
-            resp = requests.get(
-                url,
-                headers={"User-Agent": USER_AGENT},
-                timeout=LINK_TIMEOUT,
-                allow_redirects=True,
-            )
-            latency_ms = round((time.perf_counter() - start) * 1000)
-            status_code = resp.status_code
-            ok = 200 <= resp.status_code < 400
-        except Exception as exc:
-            latency_ms = round((time.perf_counter() - start) * 1000)
-            error_msg = str(exc)[:100]
-
-        checked_at = datetime.now().strftime("%H:%M:%S")
-        if ok and (latency_ms is None or latency_ms < 2500):
-            status, status_label = "online", "ONLINE"
-        elif ok:
-            status, status_label = "degraded", "LENTO"
-        else:
-            status, status_label = "offline", (f"OFF ({status_code})" if status_code else "OFFLINE")
-
-        results.append({
-            "name": name,
-            "url": url,
-            "ok": ok,
-            "status": status,
-            "status_label": status_label,
-            "status_code": status_code,
-            "latency_ms": latency_ms,
-            "checked_at": checked_at,
-            "error": error_msg,
-        })
-    return results
+    items = list(targets if targets is not None else DEFAULT_LIVE_TARGETS)
+    if not items:
+        return []
+    workers = min(6, len(items))
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        return list(pool.map(_check_one_live_target, items))

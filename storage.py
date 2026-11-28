@@ -1,4 +1,4 @@
-"""Persistência de métricas de acesso, histórico e lista de interessados."""
+﻿"""Persistência de métricas de acesso, histórico e lista de interessados."""
 
 import csv
 import json
@@ -127,52 +127,106 @@ class Storage:
         except Exception:
             return {}
 
-    def record_and_compare_history(self, result: dict) -> dict | None:
+    def _atomic_write_json(self, path: Path, payload: dict) -> None:
+        raw = json.dumps(payload, ensure_ascii=False, indent=2)
+        tmp_fd, tmp_name = tempfile.mkstemp(dir=str(path.parent), prefix=".tmp_hist_", suffix=".json")
+        try:
+            with os.fdopen(tmp_fd, "w", encoding="utf-8") as f:
+                f.write(raw)
+            os.replace(tmp_name, path)
+        except Exception:
+            try:
+                os.unlink(tmp_name)
+            except OSError:
+                pass
+            raise
+
+    def record_and_compare_history(self, result: dict, requested_url: str | None = None) -> dict | None:
         url = result["url"]
-        metrics = result["metrics"]
-        now_iso = datetime.now().isoformat(timespec="seconds")
-        now_label = datetime.now().strftime("%d/%m/%Y %H:%M")
+        metrics = result.get("metrics") or {}
+        now = datetime.now()
+        now_iso = now.isoformat(timespec="seconds")
+        now_label = now.strftime("%d/%m/%Y %H:%M")
+
+        cur_score = int(result.get("score") or 0)
+        cur_issues = int(result.get("total_issues") or 0)
+        cur_ttfb = int(metrics.get("ttfb_ms") or 0)
+        cur_ssl_days = metrics.get("ssl_days_left")
 
         snapshot = {
             "checked_at": now_iso,
             "checked_at_label": now_label,
-            "score": result["score"],
-            "total_issues": result["total_issues"],
-            "ttfb_ms": metrics["ttfb_ms"],
-            "ssl_days_left": metrics.get("ssl_days_left"),
+            "requested_url": (requested_url or url).strip(),
+            "final_url": url,
+            "score": cur_score,
+            "total_issues": cur_issues,
+            "ttfb_ms": cur_ttfb,
+            "ssl_days_left": cur_ssl_days,
         }
 
         with _lock:
             history = self._load_history()
-            entries = history.get(url, [])
+            raw_entries = history.get(url)
+            entries = [e for e in raw_entries if isinstance(e, dict)] if isinstance(raw_entries, list) else []
             previous = entries[-1] if entries else None
 
             comparison = None
-            if previous:
+            if previous and isinstance(previous.get("score"), (int, float)):
+                prev_score = int(previous["score"])
+                prev_issues = int(previous.get("total_issues") or 0)
+                prev_ttfb = int(previous.get("ttfb_ms") or 0)
+                prev_ssl_days = previous.get("ssl_days_left")
+
+                score_diff = cur_score - prev_score
+                if score_diff > 0:
+                    trend = "melhorou"
+                elif score_diff < 0:
+                    trend = "piorou"
+                else:
+                    trend = "estavel"
+
                 comparison = {
                     "previous_label": previous.get("checked_at_label") or previous.get("checked_at", ""),
-                    "previous_score": previous["score"],
-                    "score_diff": result["score"] - previous["score"],
-                    "issues_diff": result["total_issues"] - previous["total_issues"],
-                    "ttfb_diff": metrics["ttfb_ms"] - previous["ttfb_ms"],
+                    "previous_score": prev_score,
+                    "score_diff": score_diff,
+                    "trend": trend,
+                    "issues_diff": cur_issues - prev_issues,
+                    "ttfb_diff": cur_ttfb - prev_ttfb,
                     "ssl_days_diff": (
-                        metrics["ssl_days_left"] - previous["ssl_days_left"]
-                        if metrics.get("ssl_days_left") is not None and previous.get("ssl_days_left") is not None
+                        int(cur_ssl_days) - int(prev_ssl_days)
+                        if isinstance(cur_ssl_days, (int, float)) and isinstance(prev_ssl_days, (int, float))
                         else None
                     ),
+                    "total_checks": len(entries) + 1,
                 }
 
             entries.append(snapshot)
             history[url] = entries[-10:]
-            self.history_file.write_text(json.dumps(history, ensure_ascii=False, indent=2), encoding="utf-8")
+            self._atomic_write_json(self.history_file, history)
 
         return comparison
 
-    def add_waitlist_email(self, email: str) -> None:
+    def add_waitlist_email(self, email: str) -> bool:
+        clean_email = (email or "").strip().lower()
+        if not clean_email:
+            return False
+        today_prefix = datetime.now().strftime("%Y-%m-%d")
+
         with _lock:
+            if self.waitlist_file.exists():
+                try:
+                    with self.waitlist_file.open("r", newline="", encoding="utf-8") as rf:
+                        reader = csv.reader(rf)
+                        for row in reader:
+                            if len(row) >= 2 and row[0].strip().lower() == clean_email and row[1].startswith(today_prefix):
+                                return False
+                except Exception:
+                    pass
+
             new_file = not self.waitlist_file.exists()
             with self.waitlist_file.open("a", newline="", encoding="utf-8") as f:
                 writer = csv.writer(f)
                 if new_file:
                     writer.writerow(["email", "data"])
-                writer.writerow([email, datetime.now().isoformat(timespec="seconds")])
+                writer.writerow([clean_email, datetime.now().isoformat(timespec="seconds")])
+            return True
