@@ -31,8 +31,8 @@
     </section>
 
     <section class="space-y-2">
-      <h2 class="text-base font-bold text-slate-900">3. O que não guardamos</h2>
-      <p>Não usamos ferramentas de publicidade e não vendemos dados. Os últimos resumos técnicos por URL podem ficar salvos localmente no histórico para comparação entre verificações.</p>
+      <h2 class="text-base font-bold text-slate-900">3. Histórico das verificações</h2>
+      <p>Não usamos ferramentas de publicidade e não vendemos dados. Os resumos técnicos das verificações ficam salvos no servidor do checkUp, limitados às 10 verificações mais recentes de cada site, para comparação.</p>
     </section>
 
     <section class="space-y-2">
@@ -46,7 +46,7 @@
 
     <section class="space-y-2">
       <h2 class="text-base font-bold text-slate-900">5. Cookies</h2>
-      <p>Usamos cookies técnicos essenciais e preferências de consentimento. Você pode aceitar, rejeitar ou apagar cookies nas configurações do navegador a qualquer momento.</p>
+      <p>Usamos cookies técnicos essenciais e preferências de consentimento. Você pode aceitar, rejeitar ou apagar cookies nas configurações do navegador a qualquer momento. Ao abrir o site, seu navegador também carrega fontes do Google Fonts e scripts do CDN do Tailwind, que podem registrar seu endereço IP conforme as políticas desses serviços.</p>
     </section>
 
     <section class="space-y-2">
@@ -127,10 +127,10 @@
         : '<strong>Contagem anônima de acessos</strong>, sem associação a pessoas.';
     }
     if (sections[2]) {
-      sections[2].querySelector('h2').textContent = isEn ? '3. What we do not store' : '3. O que não guardamos';
+      sections[2].querySelector('h2').textContent = isEn ? '3. Check history' : '3. Histórico das verificações';
       sections[2].querySelector('p').textContent = isEn
-        ? 'We do not use advertising tools and we do not sell data. Recent technical summaries per URL may be saved locally in history to compare checks.'
-        : 'Não usamos ferramentas de publicidade e não vendemos dados. Os últimos resumos técnicos por URL podem ficar salvos localmente no histórico para comparação entre verificações.';
+        ? 'We do not use advertising tools and we do not sell data. Technical summaries of checks are stored on the checkUp server, limited to the 10 most recent checks per site, for comparison.'
+        : 'Não usamos ferramentas de publicidade e não vendemos dados. Os resumos técnicos das verificações ficam salvos no servidor do checkUp, limitados às 10 verificações mais recentes de cada site, para comparação.';
     }
     if (sections[3]) {
       sections[3].querySelector('h2').textContent = isEn ? '4. How we use data' : '4. Para que usamos os dados';
@@ -148,8 +148,8 @@
     if (sections[4]) {
       sections[4].querySelector('h2').textContent = isEn ? '5. Cookies' : '5. Cookies';
       sections[4].querySelector('p').textContent = isEn
-        ? 'We use essential technical cookies and optional consent preferences. You can accept, reject, or clear cookies in your browser settings at any time.'
-        : 'Usamos cookies técnicos essenciais e preferências de consentimento. Você pode aceitar, rejeitar ou apagar cookies nas configurações do navegador a qualquer momento.';
+        ? 'We use essential technical cookies and optional consent preferences. You can accept, reject, or clear cookies in your browser settings at any time. When you open the site, your browser also loads fonts from Google Fonts and scripts from the Tailwind CDN, which may log your IP address under those services' policies.'
+        : 'Usamos cookies técnicos essenciais e preferências de consentimento. Você pode aceitar, rejeitar ou apagar cookies nas configurações do navegador a qualquer momento. Ao abrir o site, seu navegador também carrega fontes do Google Fonts e scripts do CDN do Tailwind, que podem registrar seu endereço IP conforme as políticas desses serviços.';
     }
     if (sections[5]) {
       sections[5].querySelector('h2').textContent = isEn ? '6. How long we keep data' : '6. Por quanto tempo guardamos';

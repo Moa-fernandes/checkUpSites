@@ -1,4 +1,4 @@
-﻿"""Auditoria de infraestrutura, cabeçalhos OWASP, cookies, superfície pública e stack tecnológica."""
+"""Auditoria de infraestrutura, cabeçalhos OWASP, cookies, superfície pública e stack tecnológica."""
 
 from __future__ import annotations
 
@@ -473,9 +473,9 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
     if "<html" in low_html_only or "<!doctype html" in low_html_only:
         add_item(frontend_langs, "HTML5", "estrutura HTML detectada")
     if "<script" in low_html_only or rx(r"\.m?js(?:[\"\'?&#/]|$)", low_all) or "application/javascript" in low_all or "text/javascript" in low_all:
-        add_item(frontend_langs, "JavaScript", "scripts/m?dulos JS presentes")
+        add_item(frontend_langs, "JavaScript", "scripts/módulos JS presentes")
     if rx(r"\.tsx?(?:[\"\'?&#/]|$)", low_all) or "__next_data__" in low_all or "data-nextjs" in low_all or "typescript" in low_all:
-        add_item(frontend_langs, "TypeScript", "ind?cios de bundle/tipos TypeScript")
+        add_item(frontend_langs, "TypeScript", "indícios de bundle/tipos TypeScript")
     if "<style" in low_html_only or 'rel="stylesheet"' in low_html_only or "rel='stylesheet'" in low_html_only or rx(r"\.css(?:[\"\'?&#/]|$)", low_all):
         add_item(frontend_langs, "CSS", "estilos/folhas CSS detectados")
 
@@ -492,7 +492,7 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
         or rx(r"\breact(?:\.production|\.development)?(?:\.min)?\.js", low_all)
         or "/_next/" in low_all
     ):
-        add_item(frameworks, "React", "DOM/bundles/refer?ncias React")
+        add_item(frameworks, "React", "DOM/bundles/referências React")
     if "ng-version" in low_all or rx(r"_ng(?:host|content)-", low_all) or "angular" in low_all:
         add_item(frameworks, "Angular", "atributos/scripts Angular")
     if rx(r"\bdata-v-[a-f0-9]+\b", low_all) or "__vue" in low_all or "vue.global" in low_all or "vue.runtime" in low_all:
@@ -524,17 +524,17 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
         "tailwindcss" in low_all
         or rx(r'(?:class|className)=[\"\'][^\"\']*\b(?:flex|grid|hidden|block|relative|absolute|px-\d+|py-\d+|p-\d+|m-\d+|mx-auto|text-(?:xs|sm|base|lg|xl|2xl)|bg-(?:slate|gray|zinc|neutral|stone|red|amber|emerald|blue|indigo|violet|purple|pink|white|black)(?:-\d{2,3})?|rounded-(?:sm|md|lg|xl|2xl|full))\b', combined_html)
     ):
-        add_item(libraries, "Tailwind CSS", "classes utilit?rias / Tailwind")
+        add_item(libraries, "Tailwind CSS", "classes utilitárias / Tailwind")
     if rx(r"\bbootstrap(?:\.bundle)?(?:\.min)?\.(?:js|css)", low_all) or rx(r'(?:class|className)=[\"\'][^\"\']*\b(?:container-fluid|col-(?:sm|md|lg|xl)-\d+|btn-(?:primary|secondary|outline-\w+)|carousel-item)\b', combined_html):
         add_item(libraries, "Bootstrap", "assets/classes Bootstrap")
     if rx(r"\bjquery[.-]?[\d.]*(?:\.min)?\.js", low_all) or rx(r"\b(?:jQuery|window\.\$)\b", full_scan_blob):
-        add_item(libraries, "jQuery", "script/refer?ncia jQuery")
+        add_item(libraries, "jQuery", "script/referência jQuery")
     if "gtag/js" in low_all or "googletagmanager.com" in low_all or "google-analytics.com" in low_all or rx(r"\bgtag\s*\(", full_scan_blob):
-        add_item(libraries, "Google Tag Manager / Analytics", "scripts/tags de mensura??o")
+        add_item(libraries, "Google Tag Manager / Analytics", "scripts/tags de mensuração")
     if "sentry" in low_all or "__sentry__" in low_all:
         add_item(libraries, "Sentry", "SDK/monitoramento Sentry")
     if "swiper" in low_all:
-        add_item(libraries, "Swiper", "carrossel/m?dulo Swiper")
+        add_item(libraries, "Swiper", "carrossel/módulo Swiper")
     if "slick" in low_all:
         add_item(libraries, "Slick Carousel", "carrossel Slick")
     if "font-awesome" in low_all or "fontawesome" in low_all or rx(r'(?:class|className)=[\"\'][^\"\']*\bfa-(?:solid|regular|brands|light)\b', combined_html):
@@ -542,22 +542,22 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
     if "lucide" in low_all or "data-lucide" in low_all:
         add_item(libraries, "Lucide Icons", "?cones Lucide")
     if "chart.js" in low_all or "highcharts" in low_all or "echarts" in low_all or "apexcharts" in low_all:
-        add_item(libraries, "Biblioteca de Gr?ficos", "m?dulo de visualiza??o/gr?ficos")
+        add_item(libraries, "Biblioteca de Gráficos", "módulo de visualização/gráficos")
     if "three.js" in low_all or "three.min.js" in low_all or "webglrenderer" in low_all:
         add_item(libraries, "Three.js", "WebGL / Three.js")
 
     if any(k in low_headers for k in ("php", "phpsessid")) or "/wp-content/" in low_all or rx(r"\.php(?:[\"\'?&#/]|$)", low_all):
-        add_item(backend_langs, "PHP", "header/sess?o/rotas PHP")
+        add_item(backend_langs, "PHP", "header/sessão/rotas PHP")
     if any(k in low_headers for k in ("asp.net", "x-aspnet-version", "aspnet_sessionid")) or rx(r"\.aspx?(?:[\"\'?&#/]|$)", low_all):
-        add_item(backend_langs, "C# / ASP.NET", "header/sess?o/rotas .NET")
+        add_item(backend_langs, "C# / ASP.NET", "header/sessão/rotas .NET")
     if any(k in low_all for k in ("__next_data__", "/_next/", "__nuxt")) or any(k in low_headers for k in ("node", "express", "next.js")):
         add_item(backend_langs, "JavaScript / Node.js", "SSR/runtime Node/Next")
     if any(k in low_headers for k in ("python", "werkzeug", "gunicorn", "uvicorn", "django", "flask", "fastapi", "csrftoken")):
         add_item(backend_langs, "Python", "header/framework Python")
     if any(k in low_headers for k in ("jsessionid", "spring", "tomcat", "servlet", "quarkus", "micronaut")):
-        add_item(backend_langs, "Java", "runtime/sess?o JVM")
+        add_item(backend_langs, "Java", "runtime/sessão JVM")
     if any(k in low_headers for k in ("phusion passenger", "ruby", "rails", "_rails_")):
-        add_item(backend_langs, "Ruby", "runtime/sess?o Ruby/Rails")
+        add_item(backend_langs, "Ruby", "runtime/sessão Ruby/Rails")
     if any(k in low_headers for k in ("golang", "fiber", "gin", "echo")) or rx(r"\bgo\s+1\.\d+", low_all):
         add_item(backend_langs, "Go", "assinatura/runtime Go")
 
@@ -568,8 +568,8 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
         add_item(microservice_langs, "APIs / Edge / Serviços", f"{len(api_endpoints)} endpoint(s)/rota(s) identificados")
 
     for plat in (cdn, server, powered_by):
-        if plat and plat.lower() not in ("direto", "direto / n?o identificado", "n?o informado", "none"):
-            add_item(platforms, plat, "cabe?alho de infraestrutura/CDN")
+        if plat and plat.lower() not in ("direto", "direto / não identificado", "não informado", "none"):
+            add_item(platforms, plat, "cabeçalho de infraestrutura/CDN")
 
     languages: list[str] = []
     for item in frontend_langs + backend_langs + microservice_langs:
@@ -587,6 +587,6 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
         "libraries": libraries,
         "platforms": platforms,
         "evidence": evidence[:25],
-        "note": "Detec??o baseada em assinaturas p?blicas estruturais (cabe?alhos HTTP, cookies, meta tags, HTML, DOM renderizado, bundles e endpoints).",
+        "note": "Detecção baseada em assinaturas públicas estruturais (cabeçalhos HTTP, cookies, meta tags, HTML, DOM renderizado, bundles e endpoints).",
     }
 

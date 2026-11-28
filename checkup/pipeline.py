@@ -1,4 +1,4 @@
-﻿"""Orquestração rápida e progressiva da auditoria do checkUp."""
+"""Orquestração rápida e progressiva da auditoria do checkUp."""
 
 from __future__ import annotations
 
@@ -14,7 +14,8 @@ from .dom_audit import (
     quality_issues,
     render_page,
 )
-from .infra_audit import audit_exposed_surface, audit_infrastructure, detect_tech_stack
+from .infra_audit import audit_exposed_surface, audit_infrastructure
+from .stack_detect import detect_tech_stack
 from .network import check_links, fetch_raw_page, normalize_url
 from .scorer import build_incapacitation_synthesis
 
@@ -95,6 +96,16 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
     }
 
     result["tech_stack"] = detect_tech_stack(raw_info, rendered)
+    _ts = result["tech_stack"]
+    if not _ts.get("platforms"):
+        _found = []
+        _cdn = raw_info.get("cdn") or ""
+        _server = raw_info.get("server") or ""
+        if _cdn and not _cdn.lower().startswith("direto"):
+            _found.append(_cdn)
+        if _server and _server.lower() != "não informado" and _server.lower() not in _cdn.lower():
+            _found.append(_server)
+        _ts["platforms"] = _found
     result["synthesis"] = build_incapacitation_synthesis(
         raw_info["final_url"],
         result["score"],

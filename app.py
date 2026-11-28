@@ -1,4 +1,4 @@
-﻿import copy
+import copy
 import json
 import os
 import re
@@ -12,6 +12,7 @@ import requests
 from flask import Flask, Response, jsonify, make_response, redirect, render_template, request, stream_with_context, url_for
 
 from checker import DEFAULT_LIVE_TARGETS, check_live_targets, check_site, check_site_steps
+from checkup.pipeline import MIN_AUDIT_DURATION_S
 from storage import Storage
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -108,7 +109,7 @@ def create_app(
         }
 
     def render_home(**kwargs):
-        live_data = get_live_status(force=False)
+        live_data = list(live_cache["items"])
         context = {
             "result": None,
             "comparison": None,
@@ -190,6 +191,15 @@ def create_app(
                 cached = get_cached_audit(url, force=force)
                 if cached is not None:
                     yield json.dumps({"type": "progress", "percent": 55, "step": "Recuperando auditoria recente em cache..."}, ensure_ascii=False) + "\n"
+                    cache_started = time.monotonic()
+                    while True:
+                        elapsed = time.monotonic() - cache_started
+                        left = MIN_AUDIT_DURATION_S - elapsed
+                        if left <= 0:
+                            break
+                        pct = min(94, 55 + int(39 * elapsed / MIN_AUDIT_DURATION_S))
+                        yield json.dumps({"type": "progress", "percent": pct, "step": f"Consolidando auditoria em cache ({elapsed:.1f}s / {MIN_AUDIT_DURATION_S:.0f}s mín.)..."}, ensure_ascii=False) + "\n"
+                        time.sleep(min(0.5, left))
                     cached["requested_url"] = url
                     cached["from_cache"] = True
                     comp = store.record_and_compare_history(cached, requested_url=url)
@@ -245,7 +255,7 @@ def create_app(
         return render_template(
             "privacidade.html",
             contact=CONTACT_EMAIL,
-            updated=datetime.now().strftime("%d/%m/%Y"),
+            updated_at=datetime.now().strftime("%d/%m/%Y"),
         )
 
     @app.route("/favicon.ico")

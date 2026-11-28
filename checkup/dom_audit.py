@@ -1,4 +1,4 @@
-﻿"""Auditoria de HTML, acessibilidade WCAG/ARIA, DOM renderizado e fallback serverless."""
+"""Auditoria de HTML, acessibilidade WCAG/ARIA, DOM renderizado e fallback serverless."""
 
 from __future__ import annotations
 
@@ -11,6 +11,7 @@ from playwright.sync_api import Error as PlaywrightError
 from playwright.sync_api import sync_playwright
 
 from .network import USER_AGENT, fetch_raw_page, is_safe_url
+from .contrast_pixels import measure_contrast_pixels
 from .scorer import compute_score
 
 RENDER_TIMEOUT_MS = 20000
@@ -111,7 +112,7 @@ UNIFIED_DOM_JS = r"""
   const blockingHeadScripts = Array.from(new Set(
     Array.from(document.querySelectorAll('head script[src]')).filter(s => {
       const type = (s.getAttribute('type') || '').toLowerCase();
-      return !s.defer && !s.async && type !== 'module';
+      return !s.defer && !s.async && !s.noModule && type !== 'module';
     }).map(s => s.getAttribute('src')).filter(Boolean)
   )).slice(0, 5);
 
@@ -206,7 +207,7 @@ def fallback_render_from_html(html_text: str, base_url: str = "") -> dict:
     if head:
         for s in head.find_all("script", src=True):
             stype = (s.get("type") or "").lower()
-            if not s.has_attr("defer") and not s.has_attr("async") and stype != "module":
+            if not s.has_attr("defer") and not s.has_attr("async") and not s.has_attr("nomodule") and stype != "module":
                 blocking_scripts.append(s["src"])
 
     inline_js = "\n".join(s.string or "" for s in scripts if not s.get("src"))
@@ -292,9 +293,14 @@ def render_page(url: str, raw_html: str = "") -> dict:
                 )
 
                 page.goto(url, wait_until="domcontentloaded", timeout=RENDER_TIMEOUT_MS)
+                try:
+                    page.wait_for_load_state("networkidle", timeout=6000)
+                except PlaywrightError:
+                    pass
                 page.wait_for_timeout(SETTLE_MS)
                 rendered_html = page.content()
                 dom_data = page.evaluate(UNIFIED_DOM_JS)
+                colors = measure_contrast_pixels(page)
 
                 page.set_viewport_size({"width": 375, "height": 812})
                 page.wait_for_timeout(350)
@@ -312,7 +318,7 @@ def render_page(url: str, raw_html: str = "") -> dict:
         "fallback_html": False,
         "html": rendered_html,
         "rendered_kb": round(len(rendered_html.encode("utf-8")) / 1024, 1),
-        "colors": dom_data.get("colors") or [],
+        "colors": colors,
         "quality": dom_data.get("quality") or {},
         "console_errors": list(dict.fromkeys(console_errors)),
         "js_errors": list(dict.fromkeys(js_errors)),
@@ -326,31 +332,41 @@ def _is_large_text(size: float, weight: int) -> bool:
 
 
 def contrast_issues(color_items: list[dict]) -> list[dict]:
-    failing = []
-    seen = set()
-    for item in color_items or []:
-        needed = 3.0 if _is_large_text(item["fontSize"], item["fontWeight"]) else 4.5
-        if item["ratio"] < needed:
-            sig = (item["text"].strip().lower(), round(item["ratio"], 1))
-            if sig in seen:
-                continue
-            seen.add(sig)
-            failing.append((item, needed))
+    """Só entra como problema o texto medido por pixels com contraste abaixo do mínimo WCAG."""
+    failing = [item for item in (color_items or []) if item.get("status") == "FALHA"]
     if not failing:
         return []
+    severe = any(item["ratio"] < 3.0 for item in failing)
+    details = [
+        {
+            "text": item["text"],
+            "ratio": item["ratio"],
+            "needed": item["needed"],
+            "color": item["color"],
+            "font_size": item["fontSize"],
+            "font_weight": item["fontWeight"],
+        }
+        for item in failing
+    ]
+    examples: list[str] = []
+    seen: set = set()
+    for item in failing:
+        sig = (item["text"].strip().lower(), item["ratio"])
+        if sig in seen:
+            continue
+        seen.add(sig)
+        examples.append(f'"{item["text"]}": contraste {item["ratio"]:.2f}:1 (mínimo {item["needed"]})')
     return [{
         "id": "wcag-contrast",
-        "level": "alta",
+        "level": "alta" if severe else "media",
         "category": "Acessibilidade",
         "title": "Contraste de cores insuficiente",
         "count": len(failing),
-        "location": "Elementos de texto visíveis (WCAG AA)",
-        "explanation": "Texto com baixo contraste dificulta a leitura em telas variadas ou com brilho intenso.",
-        "fix": "Use cores com contraste mínimo de 4,5:1 para textos normais e 3:1 para textos grandes.",
-        "examples": [
-            f'"{item["text"]}": contraste {item["ratio"]:.1f}:1 (mínimo {needed})'
-            for item, needed in failing[:5]
-        ],
+        "location": "Texto medido pelos pixels visíveis (WCAG AA)",
+        "explanation": "Texto com contraste abaixo do mínimo WCAG é difícil de ler. Abaixo de 3:1 o problema é grave.",
+        "fix": "Escureça o texto ou clareie o fundo até atingir 4,5:1 (texto normal) ou 3:1 (texto grande).",
+        "examples": examples[:40],
+        "details": details,
     }]
 
 
@@ -589,6 +605,17 @@ def audit_html_deep_metrics(html: str, final_url: str) -> dict:
     }
 
 
+def _is_hidden_control(tag) -> bool:
+    """Honeypots, campos ocultos e campos fora da árvore de acessibilidade não são avaliados."""
+    if (tag.get("aria-hidden") or "").strip().lower() == "true":
+        return True
+    if (tag.get("tabindex") or "").strip() == "-1":
+        return True
+    if "hidden" in (tag.get("class") or []):
+        return True
+    return bool(tag.find_parent(attrs={"hidden": True}) or tag.find_parent(attrs={"aria-hidden": "true"}))
+
+
 def _has_accessible_name(tag, soup) -> bool:
     if tag.get("aria-label") or tag.get("aria-labelledby") or tag.get("title"):
         return True
@@ -702,11 +729,13 @@ def check_html(html: str, extra_issues=None) -> dict:
     for field in soup.find_all("input"):
         if field.get("type") in ("hidden", "submit", "button", "reset", "image"):
             continue
-        if not _has_accessible_name(field, soup):
-            unlabeled += 1
+        if _is_hidden_control(field) or _has_accessible_name(field, soup):
+            continue
+        unlabeled += 1
     for field in soup.find_all(["select", "textarea"]):
-        if not _has_accessible_name(field, soup):
-            unlabeled += 1
+        if _is_hidden_control(field) or _has_accessible_name(field, soup):
+            continue
+        unlabeled += 1
     add("unlabeled-inputs", "alta", "Acessibilidade", "Campos de formulário sem rótulo", unlabeled,
         "Campos sem label dificultam o preenchimento por leitores de tela e usuários em geral.",
         'Associe um <label for="id"> ao campo ou use aria-label.', "Campos de formulário")

@@ -69,7 +69,7 @@
   <form method="post" id="form-verificar"
     class="mt-7 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:flex-row sm:items-center">
     <label for="url" class="sr-only">Endereço do site</label>
-    <input id="url" name="url" type="text" required value="{{ url }}" placeholder="exemplo.com.br" autocomplete="url"
+    <input id="url" name="url" type="text" required value="{{ url if request.method == 'POST' else '' }}" placeholder="exemplo.com.br" autocomplete="off"
       class="min-h-[48px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-900 placeholder:font-sans placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-base">
     <button type="submit" id="botao-verificar" data-i18n="check_btn"
       class="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-base">
@@ -391,7 +391,7 @@
         ? window.getTranslatedReportPayload(recipientEmail || '', lang)
         : JSON.parse(currentRawEl.textContent);
       payload.language = lang;
-      payload.delivery = { method: 'email_and_download', recipient_email: recipientEmail || '', amount_brl: 5.99 };
+      payload.delivery = { method: 'email_and_download', recipient_email: recipientEmail || '' };
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
       const blobUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -601,6 +601,7 @@
       showRefreshAlert();
     };
   }
+  refreshLive(false);
   setInterval(function () { refreshLive(false); }, 60000);
 
   if (form && window.fetch && window.ReadableStream) {

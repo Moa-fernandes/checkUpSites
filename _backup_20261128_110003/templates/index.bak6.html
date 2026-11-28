@@ -1,0 +1,615 @@
+﻿{% extends "base.html" %}
+
+{% block title %}checkUp — Diagnóstico de qualidade, acessibilidade e infraestrutura{% endblock %}
+
+{% block content %}
+<style>
+  @keyframes cuPulseRing {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    70% { transform: scale(1.22); opacity: 0; }
+    100% { transform: scale(1.22); opacity: 0; }
+  }
+  .cu-ring-pulse {
+    animation: cuPulseRing 1.9s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+  }
+  .cu-expand-backdrop {
+    transition: transform 650ms cubic-bezier(0.22, 1, 0.36, 1), opacity 420ms ease;
+  }
+</style>
+
+<div id="loading-overlay" role="status" aria-live="polite" aria-hidden="true"
+  class="no-print pointer-events-none fixed inset-0 z-50 flex items-center justify-center px-4 opacity-0 transition-opacity duration-300">
+  <div id="loading-dim" class="absolute inset-0 bg-slate-950/65 transition-opacity duration-300"></div>
+  <div id="loading-grow-circle"
+    class="cu-expand-backdrop absolute h-32 w-32 rounded-full bg-indigo-700 shadow-2xl"
+    style="transform: scale(1);"></div>
+  <div id="loading-hud" class="relative z-10 flex w-full max-w-sm flex-col items-center justify-center text-center text-white">
+    <div class="relative flex h-40 w-40 items-center justify-center rounded-full bg-indigo-800/95 shadow-xl ring-2 ring-white/25 sm:h-48 sm:w-48">
+      <span class="cu-ring-pulse absolute inset-0 rounded-full border-2 border-sky-200/80"></span>
+      <svg class="h-full w-full -rotate-90" viewBox="0 0 120 120" aria-hidden="true">
+        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.22)" stroke-width="8"></circle>
+        <circle id="loading-progress-arc" cx="60" cy="60" r="52" fill="none" stroke="#ffffff" stroke-width="8"
+          stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73"
+          style="transition: stroke-dashoffset 260ms ease-out;"></circle>
+      </svg>
+      <div class="absolute inset-0 flex flex-col items-center justify-center">
+        <span id="loading-percent" class="font-mono text-3xl font-extrabold tracking-tight text-white sm:text-4xl">0%</span>
+        <span id="loading-badge" class="mt-0.5 text-[11px] font-bold uppercase tracking-widest text-indigo-100">analisando</span>
+      </div>
+    </div>
+    <p id="loading-step"
+      class="mt-5 w-full max-w-xs rounded-2xl bg-slate-900/95 px-4 py-2.5 text-xs font-semibold leading-snug text-white shadow-lg ring-1 ring-white/20 sm:max-w-md sm:text-sm">
+      Preparando diagnóstico...
+    </p>
+  </div>
+</div>
+
+<section class="no-print rounded-3xl border border-slate-200/90 bg-white p-6 shadow-sm sm:p-10">
+  <div class="flex flex-wrap items-center gap-2.5">
+    <span data-i18n="hero_badge"
+      class="inline-flex items-center gap-2 rounded-full bg-indigo-50 px-3.5 py-1 text-xs font-bold uppercase tracking-wider text-indigo-800 ring-1 ring-inset ring-indigo-200">
+      Diagnóstico gratuito em tempo real
+    </span>
+    <span data-i18n="hero_tags" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">
+      SSL · Infraestrutura · Acessibilidade · Qualidade
+    </span>
+  </div>
+
+  <h1 data-i18n="hero_title"
+    class="mt-5 max-w-3xl text-3xl font-extrabold tracking-tight text-slate-900 sm:text-5xl sm:leading-[1.12]">
+    Seu site está em boa forma?
+  </h1>
+
+  <p data-i18n="hero_subtitle" class="mt-4 max-w-2xl text-base leading-relaxed text-slate-600 sm:text-lg">
+    Cole o endereço do site e veja números objetivos e o que corrigir: validade e expiração
+    do certificado SSL, tempo de resposta, cabeçalhos de segurança, contraste de cores,
+    imagens e links quebrados, textos de teste e comportamento no celular.
+  </p>
+
+  <form method="post" id="form-verificar"
+    class="mt-7 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/80 p-3 sm:flex-row sm:items-center">
+    <label for="url" class="sr-only">Endereço do site</label>
+    <input id="url" name="url" type="text" required value="" placeholder="exemplo.com.br" autocomplete="url"
+      class="min-h-[48px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 font-mono text-sm text-slate-900 placeholder:font-sans placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-base">
+    <button type="submit" id="botao-verificar" data-i18n="check_btn"
+      class="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-base">
+      Verificar site
+    </button>
+  </form>
+
+  <p data-i18n="wait_note" class="mt-3 text-sm text-slate-600" id="aviso-espera">
+    A análise abre a página em um navegador real e testa SSL, rede, qualidade e acessibilidade.
+  </p>
+</section>
+
+<section class="no-print mt-6 rounded-2xl border border-slate-200/90 bg-white p-4 shadow-sm sm:p-5"
+  aria-labelledby="live-status-heading">
+  <div class="flex flex-wrap items-center justify-between gap-2">
+    <div class="flex items-center gap-2">
+      <span class="inline-flex h-2.5 w-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+      <h2 id="live-status-heading" data-i18n="live_title"
+        class="text-xs font-extrabold uppercase tracking-wider text-slate-800">
+        Status ao vivo — alvos públicos abertos (clique para analisar)
+      </h2>
+    </div>
+    <div class="relative flex flex-wrap items-center gap-2">
+      <span id="live-refresh-toast" role="status" aria-live="polite"
+        class="pointer-events-none hidden rounded-lg border border-emerald-300 bg-emerald-50 px-2.5 py-1 font-mono text-[11px] font-bold text-emerald-900 shadow-sm transition-all duration-300">
+      </span>
+      <button type="button" id="btn-refresh-live" data-i18n="live_refresh"
+        class="min-h-[36px] rounded-lg border border-slate-300 bg-slate-50 px-3 py-1.5 font-mono text-[11px] font-bold text-slate-700 hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+        Atualizar agora
+      </button>
+    </div>
+  </div>
+
+  {% set initial_live = (live_items if live_items else [
+    {"name": "Trens RJ", "url": "https://trensrj.com.br/pt", "status": "online", "status_label": "ONLINE", "latency_ms": None, "checked_at": "ao vivo"},
+    {"name": "Clima – Climatempo Rio de Janeiro", "url": "", "status": "online", "status_label": "ONLINE", "latency_ms": None, "checked_at": "ao vivo"},
+    {"name": "Aeroportos RJ (Santos Dumont / Galeão)", "url": "https://www.aeroportosantosdumont.net/", "status": "online", "status_label": "ONLINE", "latency_ms": None, "checked_at": "ao vivo"}
+  ])[:3] %}
+
+  <ul id="live-targets-list" class="mt-3 space-y-2.5">
+    {% for it in initial_live %}
+    <li>
+      <div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-xs transition hover:border-indigo-400 hover:bg-indigo-50/60">
+        <button type="button" data-target-url="{{ it.url }}" data-target-name="{{ it.name }}"
+          class="js-inspect-target min-w-0 flex-1 text-left focus:outline-none">
+          <p class="truncate font-bold text-slate-900">{{ it.name }}</p>
+          <p class="truncate font-mono text-[10px] text-slate-500">{{ it.url }}</p>
+          <p class="mt-0.5 font-mono text-[10px] font-semibold text-indigo-700" data-i18n="live_click_hint">Clique para abrir análise completa →</p>
+        </button>
+        <div class="flex shrink-0 flex-col items-end gap-1 font-mono">
+          <span class="inline-block rounded-md px-2 py-0.5 text-[10px] font-bold {% if it.status == 'online' %}bg-emerald-100 text-emerald-800{% elif it.status == 'degraded' %}bg-amber-100 text-amber-900{% else %}bg-red-100 text-red-800{% endif %}">
+            {{ it.status_label or 'ONLINE' }}
+          </span>
+          <span class="text-[10px] text-slate-400">{% if it.latency_ms is not none %}{{ it.latency_ms }}ms · {% endif %}{{ it.checked_at or 'agora' }}</span>
+          <a href="{{ it.url }}" target="_blank" rel="noopener noreferrer" data-i18n="live_open_site"
+            class="rounded border border-indigo-200 bg-white px-2 py-0.5 text-[10px] font-bold text-indigo-700 hover:bg-indigo-50">Abrir site ↗</a>
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <p data-i18n="live_lgpd_note" class="mt-2.5 text-[11px] text-slate-500">
+    Monitora endpoints públicos abertos de referência e permite clicar em qualquer card para rodar e abrir o diagnóstico completo daquele alvo.
+  </p>
+</section>
+
+<div id="erro-ajax" role="alert"
+  class="mt-6 hidden rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900 sm:text-base">
+</div>
+
+{% if error %}
+<div role="alert" class="mt-6 rounded-2xl border border-red-200 bg-red-50 p-4 text-sm font-medium text-red-900 sm:text-base">
+  {{ error }}
+</div>
+{% endif %}
+
+<div id="resultado-container">
+  {% if result %}
+  {% include "_resultado.html" %}
+  {% endif %}
+</div>
+
+<section
+  class="no-print mt-14 rounded-3xl border border-indigo-200/90 bg-gradient-to-br from-indigo-50/90 via-white to-sky-50/70 p-6 shadow-sm sm:p-8"
+  aria-labelledby="avisos">
+  <h2 id="avisos" data-i18n="waitlist_title" class="text-xl font-extrabold tracking-tight text-slate-900">
+    Quer ser avisado sobre as novidades?
+  </h2>
+  <p data-i18n="waitlist_desc" class="mt-2 max-w-2xl text-sm leading-relaxed text-slate-700 sm:text-base">
+    Esta verificação automática não substitui uma revisão feita por uma pessoa, leitores de tela
+    ou testes manuais. Deixe seu e-mail para acompanhar as próximas melhorias.
+  </p>
+
+  {% if waitlist_ok %}
+  <p role="status" class="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-semibold text-emerald-900">
+    Obrigado! Avisaremos você quando houver novidades.
+  </p>
+  {% else %}
+  <form method="post" action="/avisar" class="mt-5 flex flex-col gap-3 sm:flex-row">
+    <label for="email" class="sr-only">Seu e-mail</label>
+    <input id="email" name="email" type="email" required placeholder="seu@email.com" autocomplete="email"
+      class="min-h-[48px] flex-1 rounded-xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 placeholder:text-slate-400 focus:border-indigo-600 focus:outline-none focus:ring-2 focus:ring-indigo-600 sm:text-base">
+    <button type="submit" data-i18n="waitlist_btn"
+      class="inline-flex min-h-[48px] items-center justify-center rounded-xl bg-indigo-700 px-6 py-3 text-sm font-bold text-white shadow-sm transition hover:bg-indigo-800 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:ring-offset-2 sm:text-base">
+      Quero ser avisado
+    </button>
+  </form>
+  {% if waitlist_error %}
+  <p role="alert" class="mt-3 text-sm font-semibold text-red-800">{{ waitlist_error }}</p>
+  {% endif %}
+  {% endif %}
+</section>
+
+<script>
+(function () {
+  const form = document.getElementById('form-verificar');
+  const urlInput = document.getElementById('url');
+  const btn = document.getElementById('botao-verificar');
+  const overlay = document.getElementById('loading-overlay');
+  const growCircle = document.getElementById('loading-grow-circle');
+  const dimLayer = document.getElementById('loading-dim');
+  const percentEl = document.getElementById('loading-percent');
+  const stepEl = document.getElementById('loading-step');
+  const badgeEl = document.getElementById('loading-badge');
+  const arcEl = document.getElementById('loading-progress-arc');
+  const errorBox = document.getElementById('erro-ajax');
+  const resultContainer = document.getElementById('resultado-container');
+
+  const CIRCUMFERENCE = 2 * Math.PI * 52;
+  let currentPercent = 0;
+  let targetPercent = 0;
+  let rafId = null;
+
+  function getLang() {
+
+    return raw.startsWith('en') ? 'en' : 'pt';
+  }
+
+  function translateStep(txt) {
+    if (!txt || getLang() !== 'en') return txt;
+    const rules = [
+      [/validando endere[cç]o|ssrf/i, 'Validating address, network safety, and SSRF rules...'],
+      [/consultando resposta|tls|ssl|servidor|cdn|cabe[cç]alhos/i, 'Inspecting HTTP response, TLS/SSL, server, CDN, and headers...'],
+      [/dns|robots\.txt|security\.txt|owasp|cookies/i, 'Auditing DNS, robots.txt, security.txt, OWASP headers, and cookies...'],
+      [/renderizando|dom|rede|teclado|aria/i, 'Rendering page, analyzing DOM, network, keyboard focus, and ARIA...'],
+      [/links|contraste|formul[aá]rios|misto/i, 'Checking links, WCAG contrast, forms, and mixed content...'],
+      [/consolidando|pontua[cç][aã]o|s[ií]ntese|resumo/i, 'Consolidating score, metrics, and general technical summary...'],
+      [/aprofundando|varredura|complementares/i, 'Deepening technical scan and preparing summary...'],
+      [/conclu[ií]da|conclu[ií]do|pronto/i, 'Audit completed!']
+    ];
+    for (const [rx, enStr] of rules) {
+      if (rx.test(txt)) return enStr;
+    }
+    return txt;
+  }
+
+  function computeFullScreenScale() {
+    const diag = Math.hypot(window.innerWidth || 360, window.innerHeight || 640);
+    return Math.max(12, Math.ceil((diag / 128) * 1.45));
+  }
+
+  function renderVisualProgress(pct) {
+    const clamped = Math.max(0, Math.min(100, pct));
+    if (percentEl) percentEl.textContent = Math.round(clamped) + '%';
+    if (arcEl) {
+      arcEl.style.strokeDashoffset = (CIRCUMFERENCE * (1 - clamped / 100)).toFixed(2);
+    }
+    if (growCircle) {
+      const scale = clamped >= 100 ? computeFullScreenScale() : 0.85 + (clamped / 100) * 4.6;
+      growCircle.style.transform = 'scale(' + scale.toFixed(3) + ')';
+    }
+  }
+
+  function animateLoop() {
+    if (currentPercent < targetPercent) {
+      currentPercent = Math.min(targetPercent, currentPercent + Math.max(0.5, (targetPercent - currentPercent) * 0.16));
+      renderVisualProgress(currentPercent);
+    }
+    if (Math.abs(currentPercent - targetPercent) > 0.05) {
+      rafId = requestAnimationFrame(animateLoop);
+    } else {
+      currentPercent = targetPercent;
+      renderVisualProgress(currentPercent);
+      rafId = null;
+    }
+  }
+
+  function setTargetPercent(pct, stepText) {
+    targetPercent = Math.max(targetPercent, Math.min(100, pct));
+    if (stepText && stepEl) stepEl.textContent = translateStep(stepText);
+    if (!rafId) rafId = requestAnimationFrame(animateLoop);
+  }
+
+  function openOverlay(labelText) {
+    if (!overlay) return;
+    const isEn = getLang() === 'en';
+    currentPercent = 5;
+    targetPercent = 10;
+    if (badgeEl) badgeEl.textContent = isEn ? 'analyzing' : 'analisando';
+    if (stepEl) stepEl.textContent = translateStep(labelText || (isEn ? 'Starting audit...' : 'Iniciando verificação...'));
+    if (growCircle) {
+      growCircle.style.transition = 'none';
+      growCircle.style.transform = 'scale(0.85)';
+      void growCircle.offsetWidth;
+      growCircle.style.transition = 'transform 600ms cubic-bezier(0.22, 1, 0.36, 1), opacity 400ms ease';
+    }
+    if (dimLayer) dimLayer.style.opacity = '1';
+    renderVisualProgress(currentPercent);
+    overlay.classList.remove('pointer-events-none', 'opacity-0');
+    overlay.classList.add('opacity-100');
+    overlay.setAttribute('aria-hidden', 'false');
+    if (!rafId) rafId = requestAnimationFrame(animateLoop);
+  }
+
+  function closeOverlay(afterExpand) {
+    if (rafId) {
+      cancelAnimationFrame(rafId);
+      rafId = null;
+    }
+    const finishHide = function () {
+      if (!overlay) return;
+      overlay.classList.add('opacity-0', 'pointer-events-none');
+      overlay.classList.remove('opacity-100');
+      overlay.setAttribute('aria-hidden', 'true');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = getLang() === 'en' ? 'Check site' : 'Verificar site';
+      }
+    };
+    if (afterExpand) {
+      currentPercent = 100;
+      targetPercent = 100;
+      renderVisualProgress(100);
+      if (dimLayer) dimLayer.style.opacity = '0';
+      setTimeout(function () {
+        finishHide();
+        const sec = document.getElementById('resultado') || document.querySelector('#resultado-container section');
+        if (sec) {
+          const header = document.querySelector('header');
+          const offset = header ? header.getBoundingClientRect().height + 16 : 84;
+          window.scrollTo({ top: Math.max(0, sec.getBoundingClientRect().top + window.scrollY - offset), behavior: 'smooth' });
+        }
+      }, 120);
+    } else {
+      finishHide();
+    }
+  }
+
+  function bindReportEvents() {
+    const buttons = document.querySelectorAll('.filtro-btn');
+    const items = document.querySelectorAll('.item-problema');
+    const emptyMsg = document.getElementById('sem-filtro-match');
+
+    buttons.forEach(function (b) {
+      b.onclick = function () {
+        const filter = b.getAttribute('data-filter');
+        buttons.forEach(function (other) {
+          const active = other === b;
+          other.classList.toggle('bg-indigo-700', active);
+          other.classList.toggle('text-white', active);
+          other.classList.toggle('shadow-sm', active);
+          other.classList.toggle('border', !active);
+          other.classList.toggle('border-slate-300', !active);
+          other.classList.toggle('bg-white', !active);
+          other.classList.toggle('text-slate-700', !active);
+        });
+        let visible = 0;
+        items.forEach(function (item) {
+          const show = filter === 'all' || item.getAttribute('data-category') === filter;
+          item.classList.toggle('hidden', !show);
+          if (show) visible++;
+        });
+        const activeLabel = document.getElementById('filtro-ativo-label');
+        if (activeLabel) {
+          const isEn = getLang() === 'en';
+          const catMapEn = { 'Infraestrutura': 'Infrastructure', 'Acessibilidade': 'Accessibility', 'Qualidade': 'Quality' };
+          const catLabel = isEn ? (catMapEn[filter] || filter) : filter;
+          activeLabel.textContent = filter === 'all'
+            ? (isEn ? ('Showing all ' + visible + ' findings') : ('Exibindo todos os ' + visible + ' apontamentos'))
+            : (isEn ? ('Category filter: ' + catLabel + ' (' + visible + ' item(s))') : ('Filtro por categoria: ' + catLabel + ' (' + visible + ' item(ns))'));
+        }
+        if (emptyMsg) emptyMsg.classList.toggle('hidden', visible > 0);
+      };
+    });
+
+    document.querySelectorAll('.js-priority-card').forEach(function (card) {
+      card.onclick = function () {
+        const targetLevel = card.getAttribute('data-level-filter');
+        const levelNames = { alta: 'Prioridade alta', media: 'Prioridade média', baixa: 'Prioridade baixa' };
+        let visible = 0;
+        items.forEach(function (item) {
+          const show = item.getAttribute('data-level') === targetLevel;
+          item.classList.toggle('hidden', !show);
+          if (show) visible++;
+        });
+        const activeLabel = document.getElementById('filtro-ativo-label');
+        if (activeLabel) {
+          const isEn = getLang() === 'en';
+          const namesPt = { alta: 'Prioridade alta', media: 'Prioridade média', baixa: 'Prioridade baixa' };
+          const namesEn = { alta: 'High priority', media: 'Medium priority', baixa: 'Low priority' };
+          const lbl = isEn ? (namesEn[targetLevel] || targetLevel) : (namesPt[targetLevel] || targetLevel);
+          activeLabel.textContent = isEn
+            ? ('Filtered by ' + lbl + ': ' + visible + ' item(s) to fix')
+            : ('Filtrado por ' + lbl + ': ' + visible + ' item(ns) a corrigir');
+        }
+        if (emptyMsg) emptyMsg.classList.toggle('hidden', visible > 0);
+        const sec = document.getElementById('secao-corrigir');
+        if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+    });
+
+    const rawDataEl = document.getElementById('dados-relatorio');
+    const doExportJson = function (recipientEmail) {
+      const currentRawEl = document.getElementById('dados-relatorio') || rawDataEl;
+      if (!currentRawEl) return;
+      const lang = getLang();
+      const payload = (lang === 'en' && typeof window.getTranslatedReportPayload === 'function')
+        ? window.getTranslatedReportPayload(recipientEmail || '', lang)
+        : JSON.parse(currentRawEl.textContent);
+      payload.language = lang;
+      payload.delivery = { method: 'email_and_download', recipient_email: recipientEmail || '', amount_brl: 5.99 };
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = 'checkup-' + (payload.url || 'site').replace(/[^a-z0-9.-]+/gi, '_') + '.json';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(blobUrl);
+    };
+
+    document.querySelectorAll('.js-export-json, #btn-export-json').forEach(function (elBtn) {
+      elBtn.onclick = function () {
+        if (typeof window.requestPaidReportAction === 'function') {
+          window.requestPaidReportAction(function (addr, chosenLang) {
+            const prevLang = window.__checkupLang;
+            if (chosenLang) window.__checkupLang = chosenLang;
+            doExportJson(addr);
+            window.__checkupLang = prevLang;
+          });
+        } else {
+          doExportJson('');
+        }
+      };
+    });
+
+    document.querySelectorAll('.js-print-report, #btn-print-report').forEach(function (elBtn) {
+      elBtn.onclick = function () {
+        const triggerPrintInLang = function (reportLang) {
+          const uiLang = getLang();
+          const targetLang = reportLang === 'en' ? 'en' : 'pt';
+          if (typeof window.applyFullReportTranslation === 'function') {
+            window.applyFullReportTranslation(targetLang);
+          }
+          const restoreUi = function () {
+            window.removeEventListener('afterprint', restoreUi);
+            if (typeof window.applyFullReportTranslation === 'function') {
+              window.applyFullReportTranslation(uiLang);
+            }
+          };
+          window.addEventListener('afterprint', restoreUi);
+          setTimeout(function () { window.print(); }, 60);
+        };
+        if (typeof window.requestPaidReportAction === 'function') {
+          window.requestPaidReportAction(function (_addr, chosenLang) {
+            triggerPrintInLang(chosenLang || getLang());
+          });
+        } else {
+          triggerPrintInLang(getLang());
+        }
+      };
+    });
+  }
+
+  bindReportEvents();
+
+  async function runCheckForUrl(rawUrl, targetTitle) {
+    const checkStartMs = performance.now();
+    const cleanUrl = (rawUrl || '').trim();
+    if (!cleanUrl) return;
+    if (urlInput) urlInput.value = cleanUrl;
+    if (errorBox) {
+      errorBox.classList.add('hidden');
+      errorBox.textContent = '';
+    }
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = getLang() === 'en' ? 'Checking...' : 'Verificando...';
+    }
+    openOverlay(targetTitle ? ('Analisando ' + targetTitle + '...') : 'Iniciando verificação...');
+
+    try {
+      const resp = await fetch('/verificar/stream', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: cleanUrl })
+      });
+      if (!resp.ok || !resp.body) throw new Error('Falha na comunicação com o servidor.');
+
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder('utf-8');
+      let buffer = '';
+
+      while (true) {
+        const chunk = await reader.read();
+        if (chunk.done) break;
+        buffer += decoder.decode(chunk.value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          const msg = JSON.parse(trimmed);
+          if (msg.type === 'progress') {
+            setTargetPercent(msg.percent, msg.step);
+          } else if (msg.type === 'error') {
+            closeOverlay(false);
+            if (errorBox) {
+              errorBox.textContent = msg.message || 'Não foi possível verificar o site.';
+              errorBox.classList.remove('hidden');
+            }
+            return;
+          } else if (msg.type === 'done') {
+            setTargetPercent(98, 'Concluindo análise e preparando resultado...');
+            currentPercent = Math.max(currentPercent, 98);
+            targetPercent = 98;
+            renderVisualProgress(98);
+            if (resultContainer) {
+              resultContainer.innerHTML = msg.html || '';
+              bindReportEvents();
+              if (typeof window.checkupSyncPdfLangBox === 'function') {
+                window.checkupSyncPdfLangBox(getLang());
+              }
+              if (typeof window.applyFullReportTranslation === 'function') {
+                window.applyFullReportTranslation(getLang());
+              }
+            }
+            currentPercent = 100;
+            targetPercent = 100;
+            renderVisualProgress(100);
+            closeOverlay(true);
+            return;
+          }
+        }
+      }
+      closeOverlay(false);
+    } catch (_err) {
+      closeOverlay(false);
+      if (typeof closeOverlay === "function") closeOverlay(false); if (errorBox) { errorBox.classList.remove("hidden"); errorBox.textContent = "Não foi possível concluir a verificação agora. Tente novamente."; }
+    }
+  }
+
+  const liveListEl = document.getElementById('live-targets-list');
+  const refreshLiveBtn = document.getElementById('btn-refresh-live');
+  const refreshToastEl = document.getElementById('live-refresh-toast');
+
+  function showRefreshAlert() {
+    if (!refreshToastEl) return;
+    const stamp = new Date().toLocaleString('pt-BR', {
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+    refreshToastEl.textContent = (getLang() === 'en' ? 'Updated at ' : 'Atualizado em ') + stamp;
+    refreshToastEl.classList.remove('hidden', 'opacity-0');
+    refreshToastEl.classList.add('opacity-100');
+    clearTimeout(window.__liveToastTimer);
+    window.__liveToastTimer = setTimeout(function () {
+      refreshToastEl.classList.add('opacity-0');
+      setTimeout(function () { refreshToastEl.classList.add('hidden'); }, 300);
+    }, 4500);
+  }
+
+  function bindLiveCardClicks() {
+    document.querySelectorAll('.js-inspect-target').forEach(function (cardBtn) {
+      cardBtn.onclick = function () {
+        runCheckForUrl(cardBtn.getAttribute('data-target-url') || '', cardBtn.getAttribute('data-target-name') || '');
+      };
+    });
+  }
+
+  function renderLiveItems(items) {
+    if (!liveListEl || !Array.isArray(items)) return;
+    liveListEl.innerHTML = items.slice(0, 3).map(function (it) {
+      const st = it.status || (it.ok ? 'online' : 'offline');
+      const lbl = it.status_label || (it.ok ? 'ONLINE' : 'OFFLINE');
+      const badgeCls = st === 'online'
+        ? 'bg-emerald-100 text-emerald-800'
+        : (st === 'degraded' ? 'bg-amber-100 text-amber-900' : 'bg-red-100 text-red-800');
+      const lat = (it.latency_ms !== null && it.latency_ms !== undefined) ? (it.latency_ms + 'ms · ') : '';
+      const safeUrl = it.url || '';
+      return (
+        '<li>' +
+          '<div class="flex items-center justify-between gap-2 rounded-xl border border-slate-200 bg-slate-50/70 px-3 py-2.5 text-xs transition hover:border-indigo-400 hover:bg-indigo-50/60">' +
+            '<button type="button" data-target-url="' + safeUrl + '" data-target-name="' + (it.name || '') + '" ' +
+              'class="js-inspect-target min-w-0 flex-1 text-left focus:outline-none">' +
+              '<p class="truncate font-bold text-slate-900">' + (it.name || '') + '</p>' +
+              '<p class="truncate font-mono text-[10px] text-slate-500">' + safeUrl + '</p>' +
+              '<p class="mt-0.5 font-mono text-[10px] font-semibold text-indigo-700">Clique para abrir análise completa →</p>' +
+            '</button>' +
+            '<div class="flex shrink-0 flex-col items-end gap-1 font-mono">' +
+              '<span class="inline-block rounded-md px-2 py-0.5 text-[10px] font-bold ' + badgeCls + '">' + lbl + '</span>' +
+              '<span class="text-[10px] text-slate-400">' + lat + (it.checked_at || '') + '</span>' +
+              '<a href="' + safeUrl + '" target="_blank" rel="noopener noreferrer" class="rounded border border-indigo-200 bg-white px-2 py-0.5 text-[10px] font-bold text-indigo-700 hover:bg-indigo-50">Abrir site ↗</a>' +
+            '</div>' +
+          '</div>' +
+        '</li>'
+      );
+    }).join('');
+    bindLiveCardClicks();
+  }
+
+  bindLiveCardClicks();
+
+  async function refreshLive(force) {
+    try {
+      const resp = await fetch('/status/ao-vivo' + (force ? '?force=1' : ''));
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data && data.items) renderLiveItems(data.items);
+    } catch (_e) {}
+  }
+
+  if (refreshLiveBtn) {
+    refreshLiveBtn.onclick = async function () {
+      await refreshLive(true);
+      showRefreshAlert();
+    };
+  }
+  setInterval(function () { refreshLive(false); }, 60000);
+
+  if (form && window.fetch && window.ReadableStream) {
+    form.onsubmit = function (ev) {
+      ev.preventDefault();
+      runCheckForUrl(urlInput ? urlInput.value : '', '');
+    };
+  }
+})();
+</script>
+{% endblock %}
+
