@@ -54,6 +54,7 @@ UNIFIED_DOM_JS = r"""
   };
 
   const colors = [];
+  const seenColorKeys = new Set();
   for (const el of document.querySelectorAll('body *')) {
     const textNodes = Array.from(el.childNodes).filter(
       n => n.nodeType === 3 && n.textContent.trim().length > 0
@@ -70,13 +71,17 @@ UNIFIED_DOM_JS = r"""
     const l1 = lum(fg);
     const l2 = lum(bg);
     const ratio = (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+    const snippet = textNodes.map(n => n.textContent.trim()).join(' ').slice(0, 60);
+    const dedupKey = `${snippet.toLowerCase()}|${ratio.toFixed(2)}|${cs.fontSize}`;
+    if (seenColorKeys.has(dedupKey)) continue;
+    seenColorKeys.add(dedupKey);
     colors.push({
       ratio,
       fontSize: parseFloat(cs.fontSize),
       fontWeight: parseInt(cs.fontWeight, 10) || 400,
-      text: textNodes.map(n => n.textContent.trim()).join(' ').slice(0, 60),
+      text: snippet,
     });
-    if (colors.length >= 2500) break;
+    if (colors.length >= 1500) break;
   }
 
   const imgs = Array.from(document.images);
@@ -88,7 +93,7 @@ UNIFIED_DOM_JS = r"""
     if (!el.id) return;
     if (seenIds[el.id]) {
       duplicateIds++;
-      if (dupIdNames.length < 4) dupIdNames.push(`#${el.id}`);
+      if (dupIdNames.length < 4 && !dupIdNames.includes(`#${el.id}`)) dupIdNames.push(`#${el.id}`);
     }
     seenIds[el.id] = true;
   });
@@ -103,10 +108,12 @@ UNIFIED_DOM_JS = r"""
 
   const scripts = Array.from(document.querySelectorAll('script'));
   const stylesheets = Array.from(document.querySelectorAll('link[rel="stylesheet"]'));
-  const blockingHeadScripts = Array.from(document.querySelectorAll('head script[src]')).filter(s => {
-    const type = (s.getAttribute('type') || '').toLowerCase();
-    return !s.defer && !s.async && type !== 'module';
-  }).map(s => s.getAttribute('src')).slice(0, 5);
+  const blockingHeadScripts = Array.from(new Set(
+    Array.from(document.querySelectorAll('head script[src]')).filter(s => {
+      const type = (s.getAttribute('type') || '').toLowerCase();
+      return !s.defer && !s.async && type !== 'module';
+    }).map(s => s.getAttribute('src')).filter(Boolean)
+  )).slice(0, 5);
 
   const inlineScriptText = scripts
     .filter(s => !s.getAttribute('src'))
@@ -121,7 +128,7 @@ UNIFIED_DOM_JS = r"""
     quality: {
       totalImages: imgs.length,
       brokenImages: brokenImgEls.length,
-      brokenImageExamples: brokenImgEls.slice(0, 4).map(i => i.getAttribute('src') || 'imagem sem src'),
+      brokenImageExamples: Array.from(new Set(brokenImgEls.map(i => i.getAttribute('src') || 'imagem sem src'))).slice(0, 4),
       duplicateIds,
       duplicateIdExamples: dupIdNames,
       placeholderText: match ? match[0] : null,
@@ -222,7 +229,7 @@ def fallback_render_from_html(html_text: str, base_url: str = "") -> dict:
         "quality": {
             "totalImages": len(images),
             "brokenImages": len(broken_img_examples),
-            "brokenImageExamples": broken_img_examples[:4],
+            "brokenImageExamples": list(dict.fromkeys(broken_img_examples))[:4],
             "duplicateIds": len(dup_ids),
             "duplicateIdExamples": list(dict.fromkeys(dup_ids))[:4],
             "placeholderText": bad_match.group(0) if bad_match else None,
@@ -230,7 +237,7 @@ def fallback_render_from_html(html_text: str, base_url: str = "") -> dict:
             "links": list(dict.fromkeys(abs_links)),
             "scriptCount": len(scripts),
             "stylesheetCount": len(stylesheets),
-            "blockingHeadScripts": blocking_scripts[:5],
+            "blockingHeadScripts": list(dict.fromkeys(blocking_scripts))[:5],
             "hasDebugArtifacts": has_debug,
             "hasCanonical": bool(soup.find("link", rel=lambda v: v and "canonical" in [x.lower() for x in (v if isinstance(v, list) else [v])])),
             "hasNoIndex": bool(re.search(r"\bnoindex\b", robots_content)),
@@ -307,8 +314,8 @@ def render_page(url: str, raw_html: str = "") -> dict:
         "rendered_kb": round(len(rendered_html.encode("utf-8")) / 1024, 1),
         "colors": dom_data.get("colors") or [],
         "quality": dom_data.get("quality") or {},
-        "console_errors": console_errors,
-        "js_errors": js_errors,
+        "console_errors": list(dict.fromkeys(console_errors)),
+        "js_errors": list(dict.fromkeys(js_errors)),
         "failed_requests": list(dict.fromkeys(failed_requests)),
         "mobile_overflow": mobile_overflow,
     }
@@ -320,9 +327,14 @@ def _is_large_text(size: float, weight: int) -> bool:
 
 def contrast_issues(color_items: list[dict]) -> list[dict]:
     failing = []
+    seen = set()
     for item in color_items or []:
         needed = 3.0 if _is_large_text(item["fontSize"], item["fontWeight"]) else 4.5
         if item["ratio"] < needed:
+            sig = (item["text"].strip().lower(), round(item["ratio"], 1))
+            if sig in seen:
+                continue
+            seen.add(sig)
             failing.append((item, needed))
     if not failing:
         return []
@@ -372,8 +384,24 @@ def js_dependency_issues(raw_html: str, rendered_html: str, is_rendered: bool = 
 
 def quality_issues(rendered: dict, broken_links: list[str]) -> list[dict]:
     q = rendered.get("quality") or {}
-    failed_reqs = rendered.get("failed_requests") or []
-    blocking_scripts = q.get("blockingHeadScripts") or []
+    unique_broken_links = list(dict.fromkeys(broken_links or []))
+    broken_img_examples = list(dict.fromkeys(q.get("brokenImageExamples") or []))
+
+    # Evita que URLs já apontadas em links/imagens quebrados apareçam dobradas em failed-requests
+    already_reported_urls = set()
+    for entry in unique_broken_links:
+        if " · " in entry:
+            already_reported_urls.add(entry.split(" · ", 1)[1].strip())
+    for img_src in broken_img_examples:
+        already_reported_urls.add(img_src.strip())
+
+    raw_failed_reqs = list(dict.fromkeys(rendered.get("failed_requests") or []))
+    failed_reqs = [
+        req for req in raw_failed_reqs
+        if not any(rep and rep in req for rep in already_reported_urls)
+    ]
+
+    blocking_scripts = list(dict.fromkeys(q.get("blockingHeadScripts") or []))
     issues: list[dict] = []
 
     def add(issue_id, level, category, title, count, explanation, fix, location, examples=None):
@@ -387,28 +415,28 @@ def quality_issues(rendered: dict, broken_links: list[str]) -> list[dict]:
                 "location": location,
                 "explanation": explanation,
                 "fix": fix,
-                "examples": examples or [],
+                "examples": list(dict.fromkeys(examples or []))[:5],
             })
 
     add("broken-images", "alta", "Qualidade", "Imagens quebradas", q.get("brokenImages", 0),
         "A imagem não carrega para o visitante e deixa espaço vazio ou ícone quebrado.",
         "Confira o caminho/URL da imagem e garanta que o arquivo exista.",
-        "Tags <img>", q.get("brokenImageExamples"))
+        "Tags <img>", broken_img_examples)
 
-    add("broken-links", "media", "Qualidade", "Links quebrados", len(broken_links),
+    add("broken-links", "media", "Qualidade", "Links quebrados", len(unique_broken_links),
         "Links que retornam erro degradam a navegação e a confiabilidade do site.",
         "Atualize ou remova os links com falha.",
-        "Tags <a href>", broken_links[:5])
+        "Tags <a href>", unique_broken_links)
 
     add("failed-requests", "media", "Qualidade", "Requisições de rede falharam no carregamento", len(failed_reqs),
         "Recursos externos ou chamadas da página retornaram erro HTTP (4xx/5xx) ou falha de rede.",
         "Corrija URLs, permissões CORS ou endpoints instáveis.",
-        "Requisições HTTP no navegador", failed_reqs[:5])
+        "Requisições HTTP no navegador", failed_reqs)
 
     add("blocking-scripts", "baixa", "Qualidade", "Scripts bloqueantes no <head>", len(blocking_scripts),
         "Scripts externos no <head> sem defer, async ou type='module' atrasam a renderização inicial.",
         "Adicione defer ou async nos scripts não críticos.",
-        "Seção <head> (<script src>)", blocking_scripts[:5])
+        "Seção <head> (<script src>)", blocking_scripts)
 
     placeholder = q.get("placeholderText")
     add("placeholder-text", "alta", "Qualidade", "Texto de teste ou erro visível na página", 1 if placeholder else 0,
@@ -426,12 +454,11 @@ def quality_issues(rendered: dict, broken_links: list[str]) -> list[dict]:
         "Substitua larguras fixas por layouts responsivos.",
         "Viewport mobile (375×812)")
 
-    js_problems = len(rendered.get("js_errors") or []) + len(rendered.get("console_errors") or [])
-    examples = ((rendered.get("js_errors") or []) + (rendered.get("console_errors") or []))[:4]
-    add("js-console-errors", "media", "Qualidade", "Erros de JavaScript no console", js_problems,
+    unique_js_errors = list(dict.fromkeys((rendered.get("js_errors") or []) + (rendered.get("console_errors") or [])))
+    add("js-console-errors", "media", "Qualidade", "Erros de JavaScript no console", len(unique_js_errors),
         "Erros de execução podem quebrar menus, formulários e interações.",
         "Corrija as exceções apontadas no console do navegador.",
-        "Console / runtime JavaScript", [e[:160] for e in examples])
+        "Console / runtime JavaScript", [e[:160] for e in unique_js_errors])
 
     add("duplicate-ids", "baixa", "Qualidade", "IDs duplicados no HTML", q.get("duplicateIds", 0),
         "IDs repetidos quebram âncoras, labels de formulário e seletores JavaScript.",
@@ -480,7 +507,7 @@ def audit_a11y_keyboard_and_landmarks(html: str) -> dict:
             "location": "Atributos tabindex no DOM",
             "explanation": "Valores de tabindex maiores que 0 criam saltos imprevisíveis na navegação por teclado.",
             "fix": "Use tabindex='0' ou siga a ordem natural dos elementos no HTML.",
-            "examples": positive_tabindex[:5],
+            "examples": list(dict.fromkeys(positive_tabindex))[:5],
         })
 
     hidden_focusables = []
@@ -499,7 +526,7 @@ def audit_a11y_keyboard_and_landmarks(html: str) -> dict:
             "location": "Árvore de acessibilidade / ARIA",
             "explanation": "Usuários de teclado podem focar elementos ocultos para leitores de tela.",
             "fix": "Aplique tabindex='-1' nos controles internos ou remova aria-hidden='true'.",
-            "examples": hidden_focusables[:5],
+            "examples": list(dict.fromkeys(hidden_focusables))[:5],
         })
 
     has_main = bool(soup.find("main") or soup.find(attrs={"role": "main"}))
@@ -569,6 +596,53 @@ def _has_accessible_name(tag, soup) -> bool:
         if soup.find("label", attrs={"for": tag["id"]}):
             return True
     return bool(tag.find_parent("label"))
+
+
+_LEVEL_RANK = {"alta": 3, "media": 2, "baixa": 1}
+
+
+def _merge_and_dedupe_issues(issues: list[dict]) -> list[dict]:
+    """Deduplica apontamentos por ID e também por título normalizado na mesma categoria."""
+    merged: list[dict] = []
+    by_id: dict[str, dict] = {}
+    by_norm_title: dict[tuple[str, str], dict] = {}
+
+    for raw_item in issues:
+        if not isinstance(raw_item, dict):
+            continue
+        item = dict(raw_item)
+        item["examples"] = list(dict.fromkeys(item.get("examples") or []))[:5]
+        if not item.get("location"):
+            item["location"] = item.get("category") or "Documento HTML"
+
+        iid = (item.get("id") or "").strip()
+        cat = (item.get("category") or "Qualidade").strip()
+        norm_title = re.sub(r"\s+", " ", (item.get("title") or "").strip().lower())
+        title_key = (cat, norm_title)
+
+        existing = by_id.get(iid) if iid else None
+        if existing is None and norm_title:
+            existing = by_norm_title.get(title_key)
+
+        if existing is not None:
+            # Mescla exemplos únicos sem dobrar o card
+            combined_examples = list(dict.fromkeys((existing.get("examples") or []) + item["examples"]))
+            existing["examples"] = combined_examples[:5]
+            if combined_examples:
+                existing["count"] = max(int(existing.get("count") or 1), int(item.get("count") or 1), len(combined_examples))
+            else:
+                existing["count"] = max(int(existing.get("count") or 1), int(item.get("count") or 1))
+            if _LEVEL_RANK.get(item.get("level", "baixa"), 1) > _LEVEL_RANK.get(existing.get("level", "baixa"), 1):
+                existing["level"] = item["level"]
+            continue
+
+        merged.append(item)
+        if iid:
+            by_id[iid] = item
+        if norm_title:
+            by_norm_title[title_key] = item
+
+    return merged
 
 
 def check_html(html: str, extra_issues=None) -> dict:
@@ -663,17 +737,7 @@ def check_html(html: str, extra_issues=None) -> dict:
         "Saltos na hierarquia de títulos prejudicam a navegação estruturada.",
         "Use os níveis de título em sequência (h1 -> h2 -> h3).", "Hierarquia de títulos (h1–h6)")
 
-    # Deduplicação por id para evitar penalidade dupla
-    deduped: list[dict] = []
-    seen_issue_ids: set[str] = set()
-    for item in issues:
-        iid = item.get("id") or item.get("title")
-        if iid in seen_issue_ids:
-            continue
-        seen_issue_ids.add(iid)
-        if not item.get("location"):
-            item["location"] = item.get("category") or "Documento HTML"
-        deduped.append(item)
+    deduped = _merge_and_dedupe_issues(issues)
 
     scoring = compute_score(deduped)
     return {

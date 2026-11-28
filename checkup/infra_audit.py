@@ -24,11 +24,11 @@ CORE_SECURITY_HEADERS = [
 ]
 
 MODERN_OWASP_HEADERS = [
-    ("permissions-policy", "Permissions-Policy", "baixa",
+    ("permissions-policy", "Permissions-Policy",
      "Restringe acesso a câmera, microfone, geolocalização e APIs sensíveis do navegador."),
-    ("cross-origin-opener-policy", "Cross-Origin-Opener-Policy (COOP)", "baixa",
+    ("cross-origin-opener-policy", "Cross-Origin-Opener-Policy (COOP)",
      "Isola o contexto de navegação contra ataques cross-origin."),
-    ("cross-origin-resource-policy", "Cross-Origin-Resource-Policy (CORP)", "baixa",
+    ("cross-origin-resource-policy", "Cross-Origin-Resource-Policy (CORP)",
      "Define quais origens podem carregar este recurso."),
 ]
 
@@ -189,19 +189,21 @@ def audit_infrastructure(raw_info: dict) -> list[dict]:
             "examples": [f"{label}: {reason}" for label, reason in missing_core[:5]],
         })
 
-    for key, label, lvl, desc in MODERN_OWASP_HEADERS:
-        if key not in headers:
-            issues.append({
-                "id": f"missing-{key}",
-                "level": lvl,
-                "category": "Infraestrutura",
-                "title": f"Cabeçalho {label} ausente",
-                "count": 1,
-                "location": "Cabeçalhos HTTP da resposta",
-                "explanation": desc,
-                "fix": f"Adicione o cabeçalho {label} na resposta HTTP.",
-                "examples": [f"Ausente: {key}"],
-            })
+    missing_modern = [
+        (label, desc) for key, label, desc in MODERN_OWASP_HEADERS if key not in headers
+    ]
+    if missing_modern:
+        issues.append({
+            "id": "missing-modern-owasp-headers",
+            "level": "baixa",
+            "category": "Infraestrutura",
+            "title": "Cabeçalhos complementares de isolamento OWASP ausentes",
+            "count": len(missing_modern),
+            "location": "Cabeçalhos HTTP da resposta",
+            "explanation": "Cabeçalhos modernos reforçam isolamento de origem e permissões de APIs do navegador.",
+            "fix": "Avalie adicionar Permissions-Policy, COOP e CORP conforme a necessidade da aplicação.",
+            "examples": [f"{label}: {desc}" for label, desc in missing_modern],
+        })
 
     if not (headers.get("cache-control") or "").strip():
         issues.append({

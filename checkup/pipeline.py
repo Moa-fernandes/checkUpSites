@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import time
 from urllib.parse import urlparse
 
 from .dom_audit import (
@@ -16,6 +17,8 @@ from .dom_audit import (
 from .infra_audit import audit_exposed_surface, audit_infrastructure, detect_tech_stack
 from .network import check_links, fetch_raw_page, normalize_url
 from .scorer import build_incapacitation_synthesis
+
+MIN_AUDIT_DURATION_S = 18.0
 
 
 def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], checked_links: int) -> dict:
@@ -102,8 +105,26 @@ def _build_result(raw_info: dict, rendered: dict, broken_links: list[str], check
     return result
 
 
+def _honor_minimum_duration(started_at: float, min_seconds: float = MIN_AUDIT_DURATION_S):
+    """Garante pelo menos min_seconds de verificação sem impor limite superior."""
+    while True:
+        elapsed = time.monotonic() - started_at
+        remaining = min_seconds - elapsed
+        if remaining <= 0:
+            break
+        pct = min(99, 95 + int(((min_seconds - remaining) / min_seconds) * 4))
+        yield {
+            "type": "progress",
+            "percent": pct,
+            "step": f"Consolidando auditoria e estabilizando métricas ({elapsed:.1f}s / {min_seconds:.0f}s mín.)...",
+        }
+        time.sleep(min(0.5, remaining))
+
+
 def check_site_steps(raw_url: str):
-    """Executa diagnóstico aprofundado e emite eventos de progresso reais."""
+    """Executa diagnóstico aprofundado respeitando o piso mínimo de 18s e sem cortar execuções longas."""
+    started_at = time.monotonic()
+
     yield {"type": "progress", "percent": 10, "step": "Validando endereço, DNS e regras anti-SSRF..."}
     url = normalize_url(raw_url)
 
@@ -122,7 +143,14 @@ def check_site_steps(raw_url: str):
     yield {"type": "progress", "percent": 95, "step": "Calculando pontuação ponderada por pilar e síntese final..."}
     result = _build_result(raw_info, rendered, broken_links, checked_links)
 
-    yield {"type": "progress", "percent": 100, "step": "Diagnóstico concluído!"}
+    for wait_event in _honor_minimum_duration(started_at, MIN_AUDIT_DURATION_S):
+        yield wait_event
+
+    total_elapsed = round(time.monotonic() - started_at, 2)
+    result["audit_duration_s"] = total_elapsed
+    result["min_audit_duration_s"] = MIN_AUDIT_DURATION_S
+
+    yield {"type": "progress", "percent": 100, "step": f"Diagnóstico concluído ({total_elapsed:.1f}s)!"}
     yield {"type": "done", "result": result}
 
 
