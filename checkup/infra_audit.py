@@ -405,7 +405,7 @@ def audit_exposed_surface(base_url: str, raw_html: str) -> dict:
 
 
 def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
-    """Identifica linguagens por camada (Frontend, Backend, Microsservi?os), frameworks/CMS, bibliotecas e servidor/CDN."""
+    """Identifica linguagens por camada (Frontend, Backend, Microsserviços), frameworks/CMS, bibliotecas e servidor/CDN."""
     headers = {str(k).lower(): str(v) for k, v in ((raw_info or {}).get("headers") or {}).items()}
     server = str((raw_info or {}).get("server") or "").strip()
     cdn = str((raw_info or {}).get("cdn") or "").strip()
@@ -565,7 +565,7 @@ def detect_tech_stack(raw_info: dict, rendered: dict | None = None) -> dict:
         re.findall(r"(?:https?://[^\s\"\'<>]+|/(?:api|v[1-9]|graphql|gql|ws|wss|webhook|health|metrics|auth|search|cdn)[a-zA-Z0-9_./-]*)", full_scan_blob)
     ))
     if api_endpoints or any(tok in low_all for tok in ("/graphql", "apollo", "trpc", "workers.dev", "edge-runtime")) or any(tok in low_headers for tok in ("x-envoy-", "x-kong-", "x-istio-", "cf-worker")):
-        add_item(microservice_langs, "APIs / Edge / Servi?os", f"{len(api_endpoints)} endpoint(s)/rota(s) identificados")
+        add_item(microservice_langs, "APIs / Edge / Serviços", f"{len(api_endpoints)} endpoint(s)/rota(s) identificados")
 
     for plat in (cdn, server, powered_by):
         if plat and plat.lower() not in ("direto", "direto / n?o identificado", "n?o informado", "none"):
