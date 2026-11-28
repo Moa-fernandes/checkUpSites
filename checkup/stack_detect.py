@@ -76,6 +76,7 @@ FRAMEWORK_RULES = [
     ("Joomla", "backend", [_t("generator", r"joomla", 3, proof=True), _t("html", r"/media/system/js/", 1)]),
     ("Laravel", "backend", [_t("cookies", r"laravel_session", 2)]),
     ("Django", "backend", [_t("html", r"csrfmiddlewaretoken", 2), _t("cookies", r"csrftoken", 1)]),
+    ("Flask", "backend", [_t("html", r"werkzeug|flask|jinja2|url_for", 2), _h("^server$", r"werkzeug|gunicorn", 2)]),
     ("Ruby on Rails", "backend", [_t("html", r"name=[\"']csrf-param", 2), _h("^x-runtime$", None, 1)]),
     ("Express", "backend", [_h("^x-powered-by$", r"express", 3, proof=True)]),
 ]
