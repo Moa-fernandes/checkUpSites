@@ -199,20 +199,40 @@ def extract_set_cookies(resp: requests.Response) -> list[str]:
 
 
 def fetch_raw_page(url: str) -> dict:
-    """Busca o HTML bruto e coleta métricas de rede, SSL, servidor, CDN e cabeçalhos."""
-    start = time.perf_counter()
-    resp = requests.get(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-            "Accept-Encoding": "gzip, deflate, br",
-        },
-        timeout=REQUEST_TIMEOUT,
-        allow_redirects=True,
-    )
-    elapsed_ms = round((time.perf_counter() - start) * 1000)
-    resp.raise_for_status()
+    """Busca o HTML bruto com retry curto e coleta métricas de rede, SSL, servidor, CDN e cabeçalhos."""
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Encoding": "gzip, deflate, br",
+    }
+    resp = None
+    elapsed_ms = 0
+    last_exc: Exception | None = None
+    for attempt in range(2):
+        start = time.perf_counter()
+        try:
+            candidate = requests.get(
+                url,
+                headers=headers,
+                timeout=REQUEST_TIMEOUT,
+                allow_redirects=True,
+            )
+            elapsed_ms = round((time.perf_counter() - start) * 1000)
+            if candidate.status_code in (429, 502, 503, 504) and attempt == 0:
+                time.sleep(0.4)
+                continue
+            candidate.raise_for_status()
+            resp = candidate
+            last_exc = None
+            break
+        except requests.RequestException as exc:
+            last_exc = exc
+            if attempt == 0:
+                time.sleep(0.4)
+                continue
+            raise
+    if resp is None and last_exc is not None:
+        raise last_exc
 
     headers_lower = {k.lower(): v for k, v in resp.headers.items()}
     redirects = len(resp.history)
@@ -249,15 +269,24 @@ def fetch_raw_page(url: str) -> dict:
 def safe_probe_url(target_url: str, timeout_s: float = 3.5) -> requests.Response | None:
     if not target_url or not is_safe_url(target_url):
         return None
-    try:
-        return requests.get(
-            target_url,
-            headers={"User-Agent": USER_AGENT},
-            timeout=timeout_s,
-            allow_redirects=True,
-        )
-    except Exception:
-        return None
+    for attempt in range(2):
+        try:
+            resp = requests.get(
+                target_url,
+                headers={"User-Agent": USER_AGENT},
+                timeout=timeout_s,
+                allow_redirects=True,
+            )
+            if resp.status_code in (429, 502, 503, 504) and attempt == 0:
+                time.sleep(0.25)
+                continue
+            return resp
+        except Exception:
+            if attempt == 0:
+                time.sleep(0.25)
+                continue
+            return None
+    return None
 
 
 def _check_one_link(href: str) -> str | None:
