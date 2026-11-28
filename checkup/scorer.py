@@ -28,8 +28,6 @@ def _pillar_score(issues: list[dict], category: str) -> int:
             item_penalty *= 0.5
         penalty += min(item_penalty, cap)
     return max(0, min(100, round(100.0 - penalty)))
-
-
 def compute_score(issues: list[dict]) -> dict:
     """Calcula a pontuação geral (0-100) e os sub-scores por pilar sem inflação por duplicidade."""
     infra_score = _pillar_score(issues, "Infraestrutura")
