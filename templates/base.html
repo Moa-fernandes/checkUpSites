@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}checkUp{% endblock %}</title>
   <meta name="description" content="{% block description %}Verifique certificado SSL, infraestrutura, contraste, imagens, links, acessibilidade e erros do seu site em segundos.{% endblock %}">
+  <link rel="canonical" href="{{ request.base_url }}">
   <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='favicon.svg') }}">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1062,7 +1063,7 @@
       }
     } catch (_e) {}
     const maxAge = 60 * 60 * 24 * 180;
-    document.cookie = COOKIE_NAME + '=' + choice + '; max-age=' + maxAge + '; path=/; SameSite=Lax';
+    document.cookie = COOKIE_NAME + '=' + choice + '; max-age=' + maxAge + '; path=/; SameSite=Lax' + (location.protocol === 'https:' ? '; Secure' : '');
     window.dispatchEvent(new CustomEvent('checkup:consentchange', { detail: { consent: choice } }));
   }
 

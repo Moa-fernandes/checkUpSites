@@ -15,7 +15,11 @@ LIST_JS = r"""
       .map(n => n.textContent.trim()).join(' ');
     if (!txt) continue;
     const cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) === 0) continue;
+    if (cs.visibility === 'hidden' || cs.display === 'none') continue;
+    if (el.closest('.sr-only')) continue;
+    let eff = 1, anc = el;
+    while (anc && anc.nodeType === 1) { eff *= parseFloat(getComputedStyle(anc).opacity); anc = anc.parentElement; }
+    if (eff < 0.5) continue;
     const r = el.getBoundingClientRect();
     if (r.width < 2 || r.height < 2) continue;
     out.push({
@@ -78,6 +82,24 @@ async ([b64, rects]) => {
 """
 
 
+HIDE_OVERLAYS_JS = r"""
+() => {
+  let count = 0;
+  const area = innerWidth * innerHeight;
+  for (const el of document.querySelectorAll('body *')) {
+    const cs = getComputedStyle(el);
+    if (cs.position !== 'fixed' || cs.display === 'none') continue;
+    if (parseFloat(cs.opacity) < 0.5) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width * r.height < area * 0.5) continue;
+    el.style.setProperty('display', 'none', 'important');
+    count++;
+  }
+  return count;
+}
+"""
+
+
 def _needed(size: float, weight: int) -> float:
     large = size >= 24 or (size >= 18.66 and weight >= 700)
     return 3.0 if large else 4.5
@@ -86,6 +108,7 @@ def _needed(size: float, weight: int) -> float:
 def measure_contrast_pixels(page, vw: int = 1280, vh: int = 900, max_seconds: float = 12.0) -> list[dict]:
     """Mede o contraste de cada texto visível. Status: ok, FALHA, verificar ou não medido."""
     started = time.monotonic()
+    page.evaluate(HIDE_OVERLAYS_JS)
     items = page.evaluate(LIST_JS)
     if not items:
         return []

@@ -45,3 +45,22 @@ temp/
 .DS_Store
 Thumbs.db
 visitas.txt
+
+# Ambiente virtual e cache do Python
+.venv/
+__pycache__/
+*.pyc
+
+# Backups gerados pelos scripts de correção
+_backup_*/
+
+# Arquivos de diagnóstico e testes temporários
+diag_*.py
+test_*.py
+topo.png
+
+# Dados locais (histórico, interessados, visitas)
+historico.json
+interessados.csv
+visitas.txt
+visitantes.txt

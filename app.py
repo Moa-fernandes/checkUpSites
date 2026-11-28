@@ -99,6 +99,18 @@ def create_app(
             for k in keys:
                 audit_cache[k] = (now, snapshot)
 
+    @app.after_request
+    def security_headers(resp):
+        resp.headers.setdefault("X-Content-Type-Options", "nosniff")
+        resp.headers.setdefault("X-Frame-Options", "SAMEORIGIN")
+        resp.headers.setdefault("Referrer-Policy", "strict-origin-when-cross-origin")
+        resp.headers.setdefault("Permissions-Policy", "camera=(), microphone=(), geolocation=()")
+        resp.headers.setdefault("Cross-Origin-Opener-Policy", "same-origin")
+        resp.headers.setdefault("Cross-Origin-Resource-Policy", "same-origin")
+        if request.is_secure:
+            resp.headers.setdefault("Strict-Transport-Security", "max-age=31536000")
+        return resp
+
     @app.context_processor
     def inject_globals():
         return {
@@ -142,6 +154,7 @@ def create_app(
                 visitor_id,
                 max_age=60 * 60 * 24 * 365 * 2,
                 httponly=True,
+                secure=request.is_secure,
                 samesite="Lax",
             )
             return response
@@ -257,6 +270,15 @@ def create_app(
             contact=CONTACT_EMAIL,
             updated_at=datetime.now().strftime("%d/%m/%Y"),
         )
+
+    @app.route("/.well-known/security.txt")
+    def security_txt():
+        body = (
+            f"Contact: mailto:{CONTACT_EMAIL}\n"
+            "Expires: 2027-12-31T23:59:59.000Z\n"
+            "Preferred-Languages: pt, en\n"
+        )
+        return Response(body, mimetype="text/plain; charset=utf-8")
 
     @app.route("/favicon.ico")
     def favicon():
