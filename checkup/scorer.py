@@ -22,8 +22,11 @@ def _pillar_score(issues: list[dict], category: str) -> int:
         base_weight = WEIGHTS.get(level, 1.8)
         cap = CAP_PER_ISSUE.get(level, 6.0)
         count = max(1, int(issue.get("count") or 1))
-        multiplier = 1.0 + 0.30 * math.log1p(count - 1)
-        penalty += min(base_weight * multiplier * 1.6, cap * 1.6)
+        multiplier = 1.0 + 0.20 * math.log1p(count - 1)
+        item_penalty = base_weight * multiplier
+        if level == "baixa" and issue.get("id") in ("missing-security-txt", "missing-modern-owasp-headers", "missing-cache-control"):
+            item_penalty *= 0.5
+        penalty += min(item_penalty, cap)
     return max(0, min(100, round(100.0 - penalty)))
 
 
